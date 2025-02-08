@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+
+# First, explicitly track the uploads folder and its structure
+!uploads/
+!uploads/componentes/
+!uploads/comprobantes/
+!uploads/users/
+
+# Then ignore all contents inside these folders
+uploads/componentes/*
+uploads/comprobantes/*
+uploads/users/*
+
+# Finally, make exceptions for .gitkeep files
+!uploads/componentes/.gitkeep
+!uploads/comprobantes/.gitkeep
+!uploads/users/.gitkeep
