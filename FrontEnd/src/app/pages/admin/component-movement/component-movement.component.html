@@ -89,7 +89,7 @@
                                 class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                                 Razón
                             </label>
-                            <textarea [(ngModel)]="reason" name="reason" id="reason" rows="4" (input)="onReasonChange()"
+                            <textarea [(ngModel)]="reason" name="reason" id="reason" rows="4" (input)="onReasonChange()" maxlength="255"
                                 class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5
     dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                 [class.border-red-500]="!reasonValid && showErrors"
@@ -204,7 +204,7 @@
                                     Descripción
                                 </label>
                                 <textarea [(ngModel)]="newComponent.description" name="description" id="description"
-                                    rows="4" (input)="onDescriptionChange()"
+                                    rows="4" (input)="onDescriptionChange()" maxlength="1250"
                                     class="bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5
                                     dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                     [class.border-red-500]="!descriptionValid && showErrors"
