@@ -35,7 +35,7 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Nombre</label>
                 <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.name"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
-                                (formErrors.name ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" />
+                                (formErrors.name ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" style="text-transform: uppercase;" />
                 <p *ngIf="isEditing && formErrors.name" class="mt-1 text-sm text-red-500 dark:text-red-400">
                     {{ formErrors.name }}
                 </p>
@@ -50,7 +50,7 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Apellido</label>
                 <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.lastName"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
-                    (formErrors.lastName ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" />
+                    (formErrors.lastName ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" style="text-transform: uppercase;" />
                 <p *ngIf="isEditing && formErrors.lastName" class="mt-1 text-sm text-red-500 dark:text-red-400">
                     {{ formErrors.lastName }}
                 </p>

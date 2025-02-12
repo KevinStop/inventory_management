@@ -60,7 +60,7 @@ model Request {
   status              RequestStatus       @default(pendiente)
   returnDate          DateTime?
   responsible         String?
-  description         String?
+  description         String?             @db.Text
   adminNotes          String?
   fileUrl             String?             @db.VarChar(255)
   isActive            Boolean             @default(true) @map("is_active")

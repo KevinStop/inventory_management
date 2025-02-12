@@ -11,28 +11,24 @@ const createUser = async (data) => {
       throw new Error("El email y la contraseña son obligatorios");
     }
 
-    // Hashear la contraseña
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    // Asignar una imagen predeterminada si no se proporciona una
     if (!data.imageUrl) {
       data.imageUrl = "/assets/user.png";
     }
 
-    // Eliminar campos no necesarios
     delete data.confirmPassword;
 
-    // Crear el usuario en la base de datos con los campos correctos
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: data.password,
-        name: data.name,
-        lastName: data.lastName, // Asegúrate de que este campo se incluya
+        name: data.name.toUpperCase(),
+        lastName: data.lastName.toUpperCase(), 
         imageUrl: data.imageUrl,
-        role: "user" // Valor por defecto si no se especifica
+        role: "user"
       },
     });
 
@@ -46,7 +42,6 @@ const createUser = async (data) => {
   }
 };
 
-// Verificar credenciales (inicio de sesión manual)
 const verifyUserCredentials = async (email, password) => {
   try {
     const user = await prisma.user.findUnique({
@@ -68,10 +63,8 @@ const verifyUserCredentials = async (email, password) => {
   }
 };
 
-// Actualizar un usuario por su ID
 const updateUser = async (id, data) => {
   try {
-    // Si se proporciona una nueva contraseña, hashearla antes de guardar
     if (data.password) {
       if (data.password.length < 6) {
         throw new Error("La contraseña debe tener al menos 6 caracteres");
@@ -79,9 +72,14 @@ const updateUser = async (id, data) => {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    // Manejar la imagen anterior si se proporciona una nueva
+    if (data.name) {
+      data.name = data.name.toUpperCase();
+    }
+    if (data.lastName) {
+      data.lastName = data.lastName.toUpperCase();
+    }
+
     if (data.newImageUrl) {
-      // Registrar qué se está asignando
       if (data.currentImageUrl) {
         const currentImagePath = path.join(
           __dirname,
@@ -90,21 +88,19 @@ const updateUser = async (id, data) => {
           path.basename(data.currentImageUrl)
         );
 
-        // Eliminar la imagen anterior si existe
         if (fs.existsSync(currentImagePath)) {
           fs.unlinkSync(currentImagePath);
         }
       }
 
-      data.imageUrl = data.newImageUrl; // Asignar la nueva imagen al campo imageUrl
+      data.imageUrl = data.newImageUrl;
     }
-    // Eliminar campos temporales
     delete data.newImageUrl;
     delete data.currentImageUrl;
 
     const updatedUser = await prisma.user.update({
       where: { userId: Number(id) },
-      data: data, // `data` ahora contiene solo campos válidos
+      data: data,
     });
 
     return updatedUser;

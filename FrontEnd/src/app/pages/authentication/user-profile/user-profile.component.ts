@@ -24,9 +24,9 @@ export default class UserProfileComponent implements OnInit {
     imageUrl: '',
   };
   updatedData: any = { name: '', lastName: '', email: '', password: '' };
-  selectedImage: File | null = null; 
+  selectedImage: File | null = null;
   imagePreview: string | null = null;
-  isEditing = false; 
+  isEditing = false;
 
   formErrors = {
     email: '',
@@ -35,7 +35,7 @@ export default class UserProfileComponent implements OnInit {
     lastName: ''
   };
 
-  constructor(private userService: UserService, private sweetalertService: SweetalertService  ) {}
+  constructor(private userService: UserService, private sweetalertService: SweetalertService) { }
 
   ngOnInit(): void {
     this.loadUserDetails();
@@ -52,38 +52,62 @@ export default class UserProfileComponent implements OnInit {
     };
 
     // Validar nombre
-    if (!this.updatedData.name.trim()) {
+    const name = this.updatedData.name.trim();
+    if (!name) {
       this.formErrors.name = 'El nombre es requerido';
       isValid = false;
     }
 
     // Validar apellido
-    if (!this.updatedData.lastName.trim()) {
+    const lastName = this.updatedData.lastName.trim();
+    if (!lastName) {
       this.formErrors.lastName = 'El apellido es requerido';
       isValid = false;
     }
 
     // Validar email
-    const emailRegex = /^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]@espe\.edu\.ec$/;
-    const hasTwoConsecutiveDots = /\.{2,}/.test(this.updatedData.email);
+    const email = this.updatedData.email.trim();
+    const emailRegex = /^[a-zA-Z][a-zA-Z]?[a-zA-Z0-9]*@espe\.edu\.ec$/;  // Segunda letra opcional pero debe ser letra
+    const hasTwoConsecutiveDots = /\.{2,}/.test(email);
 
-    if (!this.updatedData.email.trim()) {
+    if (!email) {
       this.formErrors.email = 'El correo electrónico es requerido';
       isValid = false;
     } else if (hasTwoConsecutiveDots) {
       this.formErrors.email = 'El correo no puede contener puntos consecutivos';
       isValid = false;
-    } else if (!emailRegex.test(this.updatedData.email)) {
+    } else if (!emailRegex.test(email)) {
       this.formErrors.email = 'Ingrese un correo institucional válido (@espe.edu.ec)';
       isValid = false;
-    }
+    } else {
+      // Validar estructura esperada (Primera letra del nombre + Segunda letra opcional + Apellido + Números opcionales)
+      const firstLetter = name.charAt(0).toLowerCase(); // Primera letra del nombre
+      const emailPrefix = email.split('@')[0]; // Obtener la parte antes del @
 
-    // Validar contraseña solo si se ha proporcionado una
-    if (this.updatedData.password) {
-      if (this.updatedData.password.length < 6) {
-        this.formErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+      // Verificar que el email comience con la primera letra del nombre
+      if (!emailPrefix.startsWith(firstLetter)) {
+        this.formErrors.email = `El correo debe iniciar con "${firstLetter}[segundo nombre]${lastName.toLowerCase()}"`;
         isValid = false;
       }
+      // Verificar que la segunda letra sea una letra (si existe)
+      else if (emailPrefix.length > 1 && !/^[a-zA-Z]$/.test(emailPrefix[1])) {
+        this.formErrors.email = 'La segunda letra del correo debe ser una letra.';
+        isValid = false;
+      }
+      // Verificar que después de la segunda letra esté el apellido
+      else {
+        const expectedPrefixRegex = new RegExp(`^${firstLetter}[a-zA-Z]?${lastName.toLowerCase()}[0-9]*$`);
+        if (!expectedPrefixRegex.test(emailPrefix)) {
+          this.formErrors.email = `El correo debe iniciar con "${firstLetter}[cualquier letra]${lastName.toLowerCase()}" seguido de números opcionales.`;
+          isValid = false;
+        }
+      }
+    }
+
+    // Validar contraseña solo si se ha proporcionado una nueva
+    if (this.updatedData.password && this.updatedData.password.length < 6) {
+      this.formErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+      isValid = false;
     }
 
     return isValid;
@@ -93,7 +117,7 @@ export default class UserProfileComponent implements OnInit {
     this.userService.getUserDetails().subscribe({
       next: (data) => {
         this.user = {
-          userId: data.id || data.userId, 
+          userId: data.id || data.userId,
           name: data.name || 'No disponible',
           lastName: data.lastName || 'No disponible',
           email: data.email || 'No disponible',
@@ -130,7 +154,7 @@ export default class UserProfileComponent implements OnInit {
       this.imagePreview = e.target.result;
     };
     reader.readAsDataURL(file);
-  }  
+  }
 
   // Actualizar datos del usuario
   updateUser(): void {
@@ -181,6 +205,6 @@ export default class UserProfileComponent implements OnInit {
     this.updatedData.email = this.user.email;
     this.updatedData.password = '';
     this.selectedImage = null;
-    this.imagePreview = this.user.selectedImage; 
+    this.imagePreview = this.user.selectedImage;
   }
 }

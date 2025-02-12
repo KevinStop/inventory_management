@@ -1,6 +1,4 @@
 const jwt = require("jsonwebtoken");
-const path = require("path");
-const upload = require("../config/uploadConfig");
 const userModel = require("../models/userModel");
 const EmailService = require("../src/mailer/emailService");
 const { blacklistToken } = require("../middleware/blacklistedTokens");
