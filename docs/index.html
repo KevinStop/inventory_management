@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Sistema de Gestión de Inventarios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #003f72;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 200px;
+            margin-bottom: 15px;
+        }
+
+        .role-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .role-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .role-btn.active {
+            background-color: #003f72;
+            color: white;
+        }
+
+        .tabs {
+            display: none;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tabs.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background-color: #f5f5f5;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .tab-btn:hover {
+            background-color: #e0e0e0;
+            color: #003f72;
+        }
+
+        .tab-btn.active {
+            background-color: #003f72;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .tab-content h2 {
+            margin-bottom: 20px;
+            color: #003f72;
+            font-size: 24px;
+        }
+
+        .tab-content h3 {
+            margin: 25px 0 15px;
+            color: #2c5282;
+            font-size: 20px;
+        }
+
+        .interface-image {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        h2 {
+            color: #003f72;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style-type: none;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .feature-list li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .feature-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #003f72;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="assets/logo-espe.png" alt="Logo ESPE" class="logo">
+        <h1>Manual de Usuario - Sistema de Gestión de Inventarios</h1>
+    </header>
+
+    <div class="container">
+        <div class="role-selector">
+            <button class="role-btn" onclick="showRole('auth')">Interfaz de Autenticación</button>
+            <button class="role-btn" onclick="showRole('admin')">Interfaz de Administrador</button>
+            <button class="role-btn" onclick="showRole('user')">Interfaz de Usuario</button>
+        </div>
+
+        <!-- Tabs Autenticación -->
+        <div id="auth-tabs" class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn" onclick="showTab('auth-login')">Inicio de Sesión</button>
+                <button class="tab-btn" onclick="showTab('auth-register')">Registro</button>
+                <button class="tab-btn" onclick="showTab('auth-recovery')">Recuperación de Contraseña</button>
+            </div>
+
+            <div id="auth-login" class="tab-content">
+                <h2>Inicio de Sesión</h2>
+                <p>La interfaz de inicio de sesión permite a los usuarios autenticarse en el sistema utilizando sus credenciales institucionales. Características principales:</p>
+                <ul class="feature-list">
+                    <li>Autenticación mediante correo institucional (@espe.edu.ec)</li>
+                    <li>Validación de credenciales</li>
+                    <li>Acceso a recuperación de contraseña</li>
+                    <li>Opción para crear nueva cuenta</li>
+                </ul>
+                <img src="assets/login-interface.png" alt="Interfaz de Inicio de Sesión" class="interface-image">
+            </div>
+
+            <div id="auth-register" class="tab-content">
+                <h2>Registro de Usuario</h2>
+                <p>La interfaz de registro permite a nuevos usuarios crear una cuenta institucional en el sistema. El proceso incluye:</p>
+                <ul class="feature-list">
+                    <li>Formulario de registro con campos para nombre, apellido y correo institucional</li>
+                    <li>Validación automática del dominio @espe.edu.ec</li>
+                    <li>Envío de correo de verificación para activar la cuenta</li>
+                    <li>Proceso de activación mediante enlace de verificación</li>
+                </ul>
+                <img src="assets/register-interface.png" alt="Interfaz de Registro" class="interface-image">
+            </div>
+
+            <div id="auth-recovery" class="tab-content">
+                <h2>Recuperación de Contraseña</h2>
+                <p>El sistema proporciona un mecanismo seguro para recuperar el acceso a la cuenta. El proceso consiste en:</p>
+                <ul class="feature-list">
+                    <li>Solicitud de recuperación mediante correo institucional</li>
+                    <li>Verificación de existencia de la cuenta</li>
+                    <li>Generación y envío de contraseña temporal</li>
+                    <li>Opción para volver al inicio de sesión</li>
+                </ul>
+                <img src="assets/recovery-interface.png" alt="Interfaz de Recuperación de Contraseña" class="interface-image">
+            </div>
+        </div>
+
+        <!-- Tabs Administrador -->
+        <div id="admin-tabs" class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn" onclick="showTab('admin-main')">Panel Principal</button>
+                <button class="tab-btn" onclick="showTab('admin-components')">Componentes</button>
+                <button class="tab-btn" onclick="showTab('admin-periods')">Períodos Académicos</button>
+                <button class="tab-btn" onclick="showTab('admin-requests')">Solicitudes</button>
+                <button class="tab-btn" onclick="showTab('admin-reports')">Reportes</button>
+            </div>
+
+            <div id="admin-main" class="tab-content">
+                <h2>Panel Principal de Administrador</h2>
+                <p>El panel principal del administrador proporciona acceso a todas las funcionalidades de gestión del sistema. Desde aquí puede:</p>
+                <ul class="feature-list">
+                    <li>Gestionar componentes electrónicos</li>
+                    <li>Administrar períodos académicos</li>
+                    <li>Revisar y procesar solicitudes</li>
+                    <li>Generar reportes</li>
+                    <li>Gestionar movimientos de inventario</li>
+                </ul>
+                <img src="assets/admin-interface.png" alt="Panel Principal" class="interface-image">
+            </div>
+
+            <div id="admin-components" class="tab-content">
+                <h2>Gestión de Componentes</h2>
+                <p>En esta sección puede administrar el inventario de componentes electrónicos:</p>
+                <ul class="feature-list">
+                    <li>Agregar nuevos componentes</li>
+                    <li>Editar información existente</li>
+                    <li>Gestionar categorías</li>
+                    <li>Visualizar stock disponible</li>
+                </ul>
+                <img src="assets/components-interface.png" alt="Gestión de Componentes" class="interface-image">
+            </div>
+
+                        <div id="admin-periods" class="tab-content">
+                <h2>Gestión de Períodos Académicos</h2>
+                <p>En esta sección puede administrar los períodos académicos del sistema:</p>
+                <ul class="feature-list">
+                    <li>Crear nuevos períodos académicos</li>
+                    <li>Editar períodos existentes</li>
+                    <li>Activar/desactivar períodos</li>
+                    <li>Visualizar períodos inactivos</li>
+                </ul>
+                <img src="assets/academic-periods.png" alt="Gestión de Períodos Académicos" class="interface-image">
+                <p>Para los períodos inactivos, se muestra una tabla especial:</p>
+                <img src="assets/inactive-periods.png" alt="Períodos Inactivos" class="interface-image">
+            </div>
+
+            <div id="admin-requests" class="tab-content">
+                <h2>Gestión de Solicitudes</h2>
+                <p>La interfaz de gestión de solicitudes permite:</p>
+                <ul class="feature-list">
+                    <li>Ver todas las solicitudes pendientes</li>
+                    <li>Aprobar o rechazar solicitudes</li>
+                    <li>Gestionar préstamos activos</li>
+                    <li>Marcar devoluciones o items no devueltos</li>
+                    <li>Aplicar filtros por estado de solicitud</li>
+                </ul>
+                <img src="assets/requests-management.png" alt="Gestión de Solicitudes" class="interface-image">
+            </div>
+
+            <div id="admin-reports" class="tab-content">
+                <h2>Generación de Reportes</h2>
+                <p>El sistema ofrece diversos tipos de reportes para un control integral del inventario:</p>
+                <img src="assets/reports-interface.png" alt="Interfaz de Reportes" class="interface-image">
+                
+                <h3>1. Reporte de Préstamos por Período</h3>
+                <p>Permite generar informes detallados de los préstamos realizados en un período académico específico. Incluye filtros por rango de fechas, período académico y estado de los préstamos. Los datos se muestran en formato tabular y pueden exportarse a PDF.</p>
+                <img src="assets/period-report.png" alt="Reporte por Período" class="interface-image">
+
+                <h3>2. Componentes más Solicitados</h3>
+                <p>Analiza la demanda de los componentes electrónicos del inventario, permitiendo filtrar por rango de fechas y categoría. Esta información es vital para identificar los elementos más requeridos y optimizar la gestión del inventario.</p>
+                <img src="assets/components-report.png" alt="Reporte de Componentes mas solicitados" class="interface-image">
+
+                <h3>3. Préstamos Activos</h3>
+                <p>Proporciona una vista de todos los préstamos que se encuentran actualmente en curso. Incluye opciones de filtrado por componente específico y usuario, facilitando el seguimiento de los componentes prestados y sus responsables.</p>
+                <img src="assets/components-active-report.png" alt="Reporte de Prestamos Activos" class="interface-image">
+
+                <h3>4. Componentes con Bajo Stock</h3>
+                <p>Identifica los componentes que requieren reabastecimiento en el inventario, con la opción de filtrar por categoría. Es una herramienta esencial para la gestión preventiva del inventario, ayudando a mantener niveles óptimos de stock.</p>
+                <img src="assets/low-stock-report.png" alt="Reporte de Componentes con bajo stock" class="interface-image">
+
+                <h3>5. Movimientos de Componentes</h3>
+                <p>Muestra un registro detallado de todos los cambios en el inventario, con opciones para filtrar por rango de fechas, componente específico y tipo de movimiento (ingreso o egreso). Esencial para mantener la trazabilidad y auditar los cambios en el inventario.</p>
+                <img src="assets/components-movement-report.png" alt="Reporte de Movimiento de componentes" class="interface-image">
+
+                <h3>6. Préstamos no Devueltos</h3>
+                <p>Genera un listado de todos los componentes marcados como no retornados al sistema. Incluye filtros por rango de fechas y usuario específico, facilitando el seguimiento de componentes pendientes de devolución y la gestión de responsabilidades.</p>
+                <img src="assets/components-nodevueltos-report.png" alt="Reporte de Movimiento de componentes" class="interface-image">
+            </div>
+        </div>
+
+        <!-- Tabs Usuario -->
+        <div id="user-tabs" class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn" onclick="showTab('user-main')">Panel Principal</button>
+                <button class="tab-btn" onclick="showTab('user-catalog')">Catálogo</button>
+                <button class="tab-btn" onclick="showTab('user-requests')">Mis Solicitudes</button>
+            </div>
+
+            <div id="user-main" class="tab-content">
+                <h2>Panel Principal de Usuario</h2>
+                <p>Como usuario del sistema, puede:</p>
+                <ul class="feature-list">
+                    <li>Visualizar el catálogo de componentes</li>
+                    <li>Realizar solicitudes de préstamo</li>
+                    <li>Dar seguimiento a sus solicitudes</li>
+                </ul>
+                <img src="assets/user-interface.png" alt="Panel Usuario" class="interface-image">
+            </div>
+
+                        <div id="user-catalog" class="tab-content">
+                <h2>Catálogo de Componentes</h2>
+                <p>En el catálogo, usted puede:</p>
+                <ul class="feature-list">
+                    <li>Ver todos los componentes disponibles</li>
+                    <li>Filtrar por categorías</li>
+                    <li>Verificar cantidades disponibles</li>
+                    <li>Seleccionar componentes para préstamo</li>
+                </ul>
+                <img src="assets/user-components.png" alt="Catálogo de Componentes" class="interface-image">
+            </div>
+
+            <div id="user-requests" class="tab-content">
+                <h2>Gestión de Mis Solicitudes</h2>
+                <p>En esta sección puede:</p>
+                <ul class="feature-list">
+                    <li>Ver el historial de sus solicitudes</li>
+                    <li>Verificar el estado de solicitudes pendientes</li>
+                    <li>Realizar nuevas solicitudes de préstamo</li>
+                    <li>Ver detalles de cada solicitud</li>
+                </ul>
+                <img src="assets/user-requests.png" alt="Mis Solicitudes" class="interface-image">
+                <p>Al realizar una nueva solicitud:</p>
+                <img src="assets/new-request.png" alt="Nueva Solicitud" class="interface-image">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = null;
+
+        function showRole(role) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tabs').forEach(tab => {
+                tab.style.display = 'none';
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar los tabs del rol seleccionado
+            const selectedTabs = document.getElementById(role + '-tabs');
+            if (selectedTabs) {
+                selectedTabs.style.display = 'block';
+                selectedTabs.classList.add('active');
+            }
+            
+            // Actualizar botones de rol
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(role)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Resetear y mostrar el primer tab del rol seleccionado
+            if (selectedTabs) {
+                const firstTabButton = selectedTabs.querySelector('.tab-btn');
+                const firstTabContent = selectedTabs.querySelector('.tab-content');
+                
+                if (firstTabButton && firstTabContent) {
+                    // Resetear todos los tabs
+                    selectedTabs.querySelectorAll('.tab-content').forEach(content => {
+                        content.style.display = 'none';
+                        content.classList.remove('active');
+                    });
+                    selectedTabs.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Activar el primer tab
+                    firstTabButton.classList.add('active');
+                    firstTabContent.style.display = 'block';
+                    firstTabContent.classList.add('active');
+                }
+            }
+            
+            currentRole = role;
+        }
+
+        function showTab(tabId) {
+            const activeTabsDiv = document.querySelector('.tabs.active');
+            if (!activeTabsDiv) return;
+
+            // Ocultar todos los tabs del rol actual
+            activeTabsDiv.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+                content.classList.remove('active');
+            });
+            
+            // Desactivar todos los botones
+            activeTabsDiv.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar el tab seleccionado
+            const selectedTab = document.getElementById(tabId);
+            const selectedButton = event.target;
+            
+            if (selectedTab && selectedButton) {
+                selectedTab.style.display = 'block';
+                selectedTab.classList.add('active');
+                selectedButton.classList.add('active');
+            }
+        }
+
+        // Inicialización al cargar la página
+        window.onload = function() {
+            // Mostrar interfaz de autenticación por defecto
+            showRole('auth');
+        };
+    </script>
+</body>
+</html>
