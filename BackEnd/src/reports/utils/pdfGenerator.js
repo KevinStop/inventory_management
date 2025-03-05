@@ -29,7 +29,7 @@ class PDFGenerator {
     const logoPath = path.join(__dirname, "../../../assets/logo.png");
     this.doc
       .image(logoPath, 50, 45, { width: 150 })
-      .fontSize(20)
+      .fontSize(16)
       .text(title, 120, 110)
       .moveDown();
 

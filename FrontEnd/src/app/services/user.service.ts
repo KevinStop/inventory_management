@@ -39,12 +39,12 @@ export class UserService {
   logout(): void {
     this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
       next: () => {
-        localStorage.removeItem('selectedComponents'); 
-        this.router.navigate(['/']); 
+        localStorage.removeItem('selectedComponents');
+        this.router.navigate(['/']);
       },
       error: (err) => {
         console.error('Error al cerrar sesión:', err);
-        localStorage.removeItem('selectedComponents'); 
+        localStorage.removeItem('selectedComponents');
       },
     });
   }
@@ -60,7 +60,7 @@ export class UserService {
       map((response) => response.remainingTime),
       catchError(() => {
         console.error('Error al obtener el tiempo restante de la sesión.');
-        return of(0); 
+        return of(0);
       })
     );
   }
@@ -69,7 +69,7 @@ export class UserService {
   checkSessionExpiration(): void {
     this.getRemainingTime().subscribe((remainingTime: number) => {
       if (remainingTime <= this.expirationWarningTime) {
-        this.sessionExpiringSubject.next(true); 
+        this.sessionExpiringSubject.next(true);
       } else {
         this.sessionExpiringSubject.next(false);
       }
@@ -106,8 +106,8 @@ export class UserService {
   }
 
   requestPasswordReset(email: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/reset-password`, { email }, { 
-      withCredentials: true 
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, { email }, {
+      withCredentials: true
     }).pipe(
       catchError(error => {
         // Manejar diferentes tipos de errores
@@ -123,6 +123,25 @@ export class UserService {
   validateEmail(email: string): boolean {
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     return emailRegex.test(email);
+  }
+
+  // Añadir estos métodos en user.service.ts
+  verifyAccount(userId: string, token: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/verify/${userId}/${token}`, { withCredentials: true });
+  }
+
+  cancelAccount(userId: string, token: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/cancel/${userId}/${token}`, { withCredentials: true });
+  }
+
+  resendVerificationEmail(email: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/resend-verification`, { email }, {
+      withCredentials: true
+    });
+  }
+
+  updateUserTheme(theme: 'light' | 'dark'): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/theme`, { theme }, { withCredentials: true });
   }
 
 }

@@ -33,7 +33,7 @@
             <!-- Nombre -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Nombre</label>
-                <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.name"
+                <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.name" maxlength="50" [disabled]="true"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
                                 (formErrors.name ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" style="text-transform: uppercase;" />
                 <p *ngIf="isEditing && formErrors.name" class="mt-1 text-sm text-red-500 dark:text-red-400">
@@ -48,7 +48,7 @@
             <!-- Apellido -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Apellido</label>
-                <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.lastName"
+                <input *ngIf="isEditing" type="text" [(ngModel)]="updatedData.lastName" maxlength="50" [disabled]="true"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
                     (formErrors.lastName ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" style="text-transform: uppercase;" />
                 <p *ngIf="isEditing && formErrors.lastName" class="mt-1 text-sm text-red-500 dark:text-red-400">
@@ -63,7 +63,7 @@
             <!-- Correo -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Correo Institucional</label>
-                <input *ngIf="isEditing" type="email" [(ngModel)]="updatedData.email"
+                <input *ngIf="isEditing" type="email" [(ngModel)]="updatedData.email" [disabled]="true"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
                                 (formErrors.email ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" />
                 <p *ngIf="isEditing && formErrors.email" class="mt-1 text-sm text-red-500 dark:text-red-400">
@@ -78,7 +78,7 @@
             <!-- Contraseña -->
             <div *ngIf="isEditing">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Nueva Contraseña</label>
-                <input type="password" [(ngModel)]="updatedData.password"
+                <input type="password" [(ngModel)]="updatedData.password" maxlength="25"
                     [class]="'mt-1 px-3 py-2 bg-gray-50 border text-gray-900 rounded-lg shadow-sm w-full dark:bg-gray-800 dark:text-white ' + 
                                 (formErrors.password ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600')" />
                 <p *ngIf="formErrors.password" class="mt-1 text-sm text-red-500 dark:text-red-400">

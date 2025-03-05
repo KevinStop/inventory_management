@@ -47,7 +47,6 @@ export default class RequestComponent implements OnInit {
     this.userService.getUserDetails().subscribe(
       userDetails => this.userRole = userDetails
     );
-    console.log()
   }
 
   fetchActiveRequests(): void {

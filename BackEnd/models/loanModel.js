@@ -87,7 +87,7 @@ const getLoansByUser = async (userId) => {
 
 const getCurrentLoans = async (filters = {}) => {
   try {
-    const { userId, componentId, startDate, endDate } = filters;
+    const { userId, componentId, startDate, endDate, requestTypes } = filters;
 
     // Construir la condición base
     const whereCondition = {
@@ -117,6 +117,15 @@ const getCurrentLoans = async (filters = {}) => {
       if (endDate) {
         whereCondition.startDate.lte = new Date(endDate);
       }
+    }
+
+    // Agregar filtro de tipos de solicitud
+    if (requestTypes && requestTypes.length) {
+      whereCondition.request = {
+        typeRequest: {
+          in: requestTypes
+        }
+      };
     }
 
     return await prisma.loanHistory.findMany({
@@ -195,7 +204,7 @@ const getAverageLoanDuration = async () => {
 
 const getMostRequestedComponents = async (filters = {}) => {
   try {
-    const { startDate, endDate, category } = filters;
+    const { startDate, endDate, category, requestTypes } = filters;
 
     // Construir condición base para el where
     let whereCondition = {};
@@ -209,6 +218,15 @@ const getMostRequestedComponents = async (filters = {}) => {
       if (endDate) {
         whereCondition.startDate.lte = new Date(endDate);
       }
+    }
+
+    // Agregar filtro de tipos de solicitud
+    if (requestTypes && requestTypes.length) {
+      whereCondition.request = {
+        typeRequest: {
+          in: requestTypes
+        }
+      };
     }
 
     // Primero obtenemos el conteo agrupado con filtros
@@ -242,6 +260,41 @@ const getMostRequestedComponents = async (filters = {}) => {
           },
         });
 
+        // Si hay filtro de tipo de solicitud, obtenemos el tipo más común para este componente
+        let requestType = null;
+        if (requestTypes && requestTypes.length) {
+          // Si solo hay un tipo de solicitud, lo usamos
+          if (requestTypes.length === 1) {
+            requestType = requestTypes[0];
+          } else {
+            // Si hay múltiples, obtenemos las estadísticas por tipo
+            const typeStats = await prisma.loanHistory.groupBy({
+              by: ["componentId", "request.typeRequest"],
+              _count: {
+                componentId: true,
+              },
+              where: {
+                componentId: result.componentId,
+                request: {
+                  typeRequest: {
+                    in: requestTypes
+                  }
+                }
+              },
+              orderBy: {
+                _count: {
+                  componentId: "desc",
+                },
+              },
+            });
+            
+            // Usamos el tipo más común
+            if (typeStats.length > 0) {
+              requestType = typeStats[0].request?.typeRequest || null;
+            }
+          }
+        }
+
         // Solo incluir si el componente existe y cumple con el filtro de categoría
         if (component) {
           return {
@@ -250,6 +303,7 @@ const getMostRequestedComponents = async (filters = {}) => {
               componentId: result._count.componentId,
             },
             component: component,
+            requestType: requestType
           };
         }
         return null;
@@ -268,7 +322,7 @@ const getMostRequestedComponents = async (filters = {}) => {
 
 const getLoansByPeriod = async (academicPeriodId, filters = {}) => {
   try {
-    const { startDate, endDate, status } = filters;
+    const { startDate, endDate, status, requestTypes } = filters;
 
     // Construir la consulta base
     const whereCondition = {
@@ -295,6 +349,13 @@ const getLoansByPeriod = async (academicPeriodId, filters = {}) => {
     // Agregar filtro de estado si está presente y no es 'null'
     if (status && status !== "null") {
       whereCondition.status = status;
+    }
+
+    // Agregar filtro de tipos de solicitud si está presente
+    if (requestTypes && requestTypes.length) {
+      whereCondition.request.typeRequest = {
+        in: requestTypes
+      };
     }
 
     return await prisma.loanHistory.findMany({
@@ -344,7 +405,7 @@ const getReturnTimeComparison = async () => {
 
 const getNotReturnedLoans = async (filters = {}) => {
   try {
-    const { userId, startDate, endDate } = filters;
+    const { userId, startDate, endDate, requestTypes } = filters;
 
     const whereCondition = {
       status: "no_devuelto",
@@ -367,6 +428,13 @@ const getNotReturnedLoans = async (filters = {}) => {
       if (endDate) {
         whereCondition.startDate.lte = new Date(endDate);
       }
+    }
+
+    // Agregar filtro de tipos de solicitud
+    if (requestTypes && requestTypes.length) {
+      whereCondition.request.typeRequest = {
+        in: requestTypes
+      };
     }
 
     return await prisma.loanHistory.findMany({

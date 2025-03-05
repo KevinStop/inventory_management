@@ -106,6 +106,15 @@ export class ReportService {
       throw new Error('Tipo de reporte no válido');
     }
 
+    // Si es un array de tipos de solicitud, convertirlo a formato adecuado para HTTP
+    if (filters.requestTypes && Array.isArray(filters.requestTypes)) {
+      // Si solo hay un valor, mandarlo como string para evitar problemas con algunos backends
+      if (filters.requestTypes.length === 1) {
+        filters.requestTypes = filters.requestTypes[0];
+      }
+      // Si hay múltiples valores, conservar el array (HttpParams lo manejará)
+    }
+
     return reportMethods[reportType](filters);
   }
 
@@ -114,13 +123,13 @@ export class ReportService {
     const filterOptions: { [key: string]: any } = {
       'loans-by-period': {
         required: ['academicPeriodId'],
-        optional: ['startDate', 'endDate', 'status']
+        optional: ['startDate', 'endDate', 'status', 'requestTypes']
       },
       'most-requested': {
-        optional: ['startDate', 'endDate', 'category']
+        optional: ['startDate', 'endDate', 'category', 'requestTypes']
       },
       'active-loans': {
-        optional: ['userId', 'componentId']
+        optional: ['userId', 'componentId', 'requestTypes']
       },
       'low-stock': {
         optional: ['category']
@@ -130,7 +139,7 @@ export class ReportService {
         optional: ['componentId', 'movementType']
       },
       'not-returned': {
-        optional: ['startDate', 'endDate', 'userId']
+        optional: ['startDate', 'endDate', 'userId', 'requestTypes']
       }
     };
 
@@ -167,7 +176,21 @@ export class ReportService {
       throw new Error('Tipo de reporte no válido');
     }
   
+    // Manejar el array de tipos de solicitud
+    if (filters.requestTypes && Array.isArray(filters.requestTypes)) {
+      if (filters.requestTypes.length === 1) {
+        filters.requestTypes = filters.requestTypes[0];
+      }
+    }
+
     const params = new HttpParams({ fromObject: filters });
     return this.http.get(`${this.baseUrl}/${endpoint}`, { params });
+  }
+
+  // Nuevo método para obtener tipos de solicitud disponibles
+  getRequestTypes(): Observable<any> {
+    // Este endpoint deberá ser implementado en el backend si no existe
+    // O puedes usar un valor fijo si los tipos son fijos
+    return this.http.get(`${environment.apiUrl}/request-types`);
   }
 }

@@ -49,7 +49,7 @@ class ReportController {
   // Procesar y validar filtros comunes
   static processFilters(filters) {
     const processedFilters = {};
-
+  
     // Procesar fechas
     if (filters.startDate) {
       processedFilters.startDate = new Date(filters.startDate);
@@ -57,7 +57,7 @@ class ReportController {
     if (filters.endDate) {
       processedFilters.endDate = new Date(filters.endDate);
     }
-
+  
     // Procesar IDs
     if (filters.academicPeriodId) {
       processedFilters.academicPeriodId = parseInt(filters.academicPeriodId);
@@ -68,7 +68,7 @@ class ReportController {
     if (filters.userId) {
       processedFilters.userId = parseInt(filters.userId);
     }
-
+  
     // Procesar otros filtros
     if (filters.status && filters.status !== "null") {
       processedFilters.status = filters.status;
@@ -79,7 +79,15 @@ class ReportController {
     if (filters.category) {
       processedFilters.category = filters.category;
     }
-
+    
+    // Procesar tipos de solicitud
+    if (filters.requestTypes) {
+      // Si es un string (viene como parámetro de URL), conviértelo a array
+      processedFilters.requestTypes = Array.isArray(filters.requestTypes)
+        ? filters.requestTypes
+        : filters.requestTypes.split(',');
+    }
+  
     return processedFilters;
   }
 
@@ -156,25 +164,38 @@ class ReportController {
           "startDate",
           "endDate",
           "status",
+          "requestTypes", // Añadir el nuevo filtro
         ],
       },
       {
         id: "most-requested",
         name: "Componentes más Solicitados",
         description: "Análisis de los componentes con mayor demanda",
-        availableFilters: ["startDate", "endDate", "category"],
+        availableFilters: [
+          "startDate", 
+          "endDate", 
+          "category",
+          "requestTypes", // Añadir el nuevo filtro
+        ],
       },
       {
         id: "active-loans",
         name: "Préstamos Activos",
         description: "Lista actual de préstamos en curso",
-        availableFilters: ["userId", "componentId"],
+        availableFilters: [
+          "userId", 
+          "componentId",
+          "requestTypes", // Añadir el nuevo filtro
+        ],
       },
       {
         id: "low-stock",
         name: "Componentes con Bajo Stock",
         description: "Componentes que requieren reabastecimiento",
-        availableFilters: ["category"],
+        availableFilters: [
+          "category",
+          "requestTypes", // Añadir el nuevo filtro
+        ],
       },
       {
         id: "movements",
@@ -185,16 +206,22 @@ class ReportController {
           "endDate",
           "componentId",
           "movementType",
+          "requestTypes", // Añadir el nuevo filtro
         ],
       },
       {
         id: "not-returned",
         name: "Préstamos No Devueltos",
         description: "Lista de préstamos marcados como no devueltos",
-        availableFilters: ["startDate", "endDate", "userId"],
+        availableFilters: [
+          "startDate", 
+          "endDate", 
+          "userId",
+          "requestTypes", // Añadir el nuevo filtro
+        ],
       },
     ];
-
+  
     res.status(200).json({ reports });
   }
 
@@ -269,26 +296,28 @@ class ReportController {
   async getLoansByPeriodPreview(req, res) {
     try {
       const filters = ReportController.processFilters(req.query);
-
+  
       const periodId = filters.academicPeriodId;
-      // Pasar todos los filtros al modelo
+      // Pasar todos los filtros al modelo, incluido el tipo de solicitud
       const loans = await loanModel.getLoansByPeriod(periodId, {
         startDate: filters.startDate,
         endDate: filters.endDate,
         status: filters.status,
+        requestTypes: filters.requestTypes, // Añadir el nuevo filtro
       });
-
+  
       if (!loans.length) {
         return res.status(200).json({
           headers: [],
           data: [],
         });
       }
-
+  
       // Preparar datos para la vista previa
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadir esta columna
         "Fecha Inicio",
         "Estado",
         "Fecha Devolución",
@@ -296,14 +325,31 @@ class ReportController {
       const data = loans.map((loan) => [
         loan.user.name,
         loan.component.name,
+        loan.request?.typeRequest || "No especificado", // Añadir el tipo de solicitud
         new Date(loan.startDate).toLocaleDateString(),
         loan.status,
         loan.endDate ? new Date(loan.endDate).toLocaleDateString() : "N/A",
       ]);
-
+  
+      // Añadir información sobre tipos de solicitud filtrados al resumen
+      const filterSummary = [];
+      if (filters.startDate) 
+        filterSummary.push(`Desde: ${new Date(filters.startDate).toLocaleDateString()}`);
+      if (filters.endDate) 
+        filterSummary.push(`Hasta: ${new Date(filters.endDate).toLocaleDateString()}`);
+      if (filters.status && filters.status !== "null") 
+        filterSummary.push(`Estado: ${filters.status}`);
+      if (filters.requestTypes) {
+        const typesArray = Array.isArray(filters.requestTypes) 
+          ? filters.requestTypes 
+          : filters.requestTypes.split(',');
+        filterSummary.push(`Tipos de solicitud: ${typesArray.join(', ')}`);
+      }
+  
       res.status(200).json({
         headers,
         data,
+        filterSummary: filterSummary.length ? filterSummary.join(" | ") : "Sin filtros aplicados",
       });
     } catch (error) {
       res.status(500).json({
@@ -317,36 +363,39 @@ class ReportController {
   async getMostRequestedComponentsPreview(req, res) {
     try {
       const filters = ReportController.processFilters(req.query);
-
+  
       // Usar los nuevos filtros
       const componentStats = await loanModel.getMostRequestedComponents(
         filters
       );
-
+  
       if (!componentStats.length) {
         return res.status(200).json({
           headers: [],
           data: [],
         });
       }
-
+  
       // Preparar datos para la vista previa con información más detallada
       const headers = [
         "Componente",
         "Categoría",
+        "Tipo de Solicitud", // Añadido
         "Total Préstamos",
         "Stock Actual",
         "Último Préstamo",
       ];
-
+  
+      // Modificar para incluir tipos de solicitud
       const data = componentStats.map((stat) => [
         stat.component.name,
         stat.component.category.name,
+        stat.requestType || "Todos", // Añadido
         stat._count.componentId,
         stat.component.quantity,
         new Date(stat.component.updatedAt).toLocaleDateString(),
       ]);
-
+  
       // Agregar mensaje sobre los filtros aplicados
       const filterSummary = [];
       if (filters.startDate)
@@ -359,7 +408,14 @@ class ReportController {
         );
       if (filters.category)
         filterSummary.push(`Categoría: ${filters.category}`);
-
+      // Añadir el filtro de tipos de solicitud
+      if (filters.requestTypes) {
+        const typesArray = Array.isArray(filters.requestTypes) 
+          ? filters.requestTypes 
+          : filters.requestTypes.split(',');
+        filterSummary.push(`Tipos de solicitud: ${typesArray.join(', ')}`);
+      }
+  
       res.status(200).json({
         headers,
         data,
@@ -383,39 +439,41 @@ class ReportController {
   async getActiveLoansPreview(req, res) {
     try {
       const filters = ReportController.processFilters(req.query);
-
+  
       const activeLoans = await loanModel.getCurrentLoans(filters);
-
+  
       if (!activeLoans.length) {
         return res.status(200).json({
           headers: [],
           data: [],
         });
       }
-
+  
       // Preparar datos para la vista previa
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadido
         "Fecha Inicio",
         "Días Transcurridos",
         "Estado",
       ];
-
+  
       const data = activeLoans.map((loan) => {
         const daysDiff = Math.floor(
           (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24)
         );
-
+  
         return [
           loan.user.name,
           loan.component.name,
+          loan.request?.typeRequest || "No especificado", // Añadido
           new Date(loan.startDate).toLocaleDateString(),
           daysDiff.toString(),
           loan.status === "no_devuelto" ? "No Devuelto" : "Devuelto",
         ];
       });
-
+  
       // Agregar mensaje sobre los filtros aplicados
       const filterSummary = [];
       if (filters.userId)
@@ -432,7 +490,14 @@ class ReportController {
               ?.component.name || filters.componentId
           }`
         );
-
+      // Añadir el filtro de tipos de solicitud
+      if (filters.requestTypes) {
+        const typesArray = Array.isArray(filters.requestTypes) 
+          ? filters.requestTypes 
+          : filters.requestTypes.split(',');
+        filterSummary.push(`Tipos de solicitud: ${typesArray.join(', ')}`);
+      }
+  
       res.status(200).json({
         headers,
         data,
@@ -608,42 +673,44 @@ class ReportController {
   async getNotReturnedPreview(req, res) {
     try {
       const filters = ReportController.processFilters(req.query);
-
+  
       // Obtener préstamos no devueltos usando los filtros
       const notReturnedLoans = await loanModel.getNotReturnedLoans(filters);
-
+  
       if (!notReturnedLoans.length) {
         return res.status(200).json({
           headers: [],
           data: [],
         });
       }
-
+  
       // Preparar datos para la vista previa
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadido
         "Fecha Préstamo",
         "Días Transcurridos",
         "Estado Final",
         "Detalles",
       ];
-
+  
       const data = notReturnedLoans.map((loan) => {
         const daysDiff = Math.floor(
           (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24)
         );
-
+  
         return [
           loan.user.name,
           loan.component.name,
+          loan.request?.typeRequest || "No especificado", // Añadido
           new Date(loan.startDate).toLocaleDateString(),
           daysDiff.toString(),
           "No Devuelto",
           loan.request.adminNotes || "Sin observaciones",
         ];
       });
-
+  
       // Agregar mensaje sobre los filtros aplicados
       const filterSummary = [];
       if (filters.startDate)
@@ -660,7 +727,14 @@ class ReportController {
         )?.user.name;
         filterSummary.push(`Usuario: ${userName || filters.userId}`);
       }
-
+      // Añadir filtro de tipos de solicitud
+      if (filters.requestTypes) {
+        const typesArray = Array.isArray(filters.requestTypes) 
+          ? filters.requestTypes 
+          : filters.requestTypes.split(',');
+        filterSummary.push(`Tipos de solicitud: ${typesArray.join(', ')}`);
+      }
+  
       // Preparar resumen estadístico
       const summary = {
         totalPrestamos: notReturnedLoans.length,
@@ -675,7 +749,7 @@ class ReportController {
         usuariosAfectados: new Set(notReturnedLoans.map((loan) => loan.userId))
           .size,
       };
-
+  
       res.status(200).json({
         headers,
         data,

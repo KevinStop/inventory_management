@@ -25,6 +25,26 @@ export const routes: Routes = [
     canActivate: [UnauthGuard],
   },
   {
+    path: 'registration-success',
+    loadComponent: () => import('./pages/authentication/registration-success/registration-success.component'),
+    canActivate: [UnauthGuard],
+  },
+  {
+    path: 'verify-account/:userId/:token',
+    loadComponent: () => import('./pages/authentication/account-verification/account-verification.component'),
+    canActivate: [UnauthGuard],
+  },
+  {
+    path: 'cancel-account/:userId/:token',
+    loadComponent: () => import('./pages/authentication/account-cancellation/account-cancellation.component'),
+    canActivate: [UnauthGuard],
+  },
+  {
+    path: 'resend-verification',
+    loadComponent: () => import('./pages/authentication/resend-verification/resend-verification.component'),
+    canActivate: [UnauthGuard],
+  },
+  {
     path: 'home',
     loadComponent: () => import('./components/layout/layout.component'),
     children: [

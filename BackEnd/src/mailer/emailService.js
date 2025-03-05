@@ -187,6 +187,27 @@ class EmailService {
       throw error;
     }
   }
+
+  static async sendAccountVerificationEmail(userId, email, name, token) {
+    try {
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+      const verificationUrl = `${baseUrl}/verify-account/${userId}/${token}`;
+      const cancelUrl = `${baseUrl}/cancel-account/${userId}/${token}`;
+      
+      await MailService.enviarCorreo(
+        email,
+        'Verificación de cuenta - Sistema de Inventario',
+        templates.accountVerificationTemplate({
+          userName: name,
+          verificationUrl,
+          cancelUrl
+        })
+      );
+    } catch (error) {
+      console.error('Error sending account verification email:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = EmailService;

@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const categoryController = require('../controllers/categoryController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const categoryController = require("../controllers/categoryController");
+const { authenticateToken } = require("../middleware/authMiddleware");
 
 /**
  * @swagger
@@ -34,7 +34,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
  *       409:
  *         description: Ya existe una categoría con ese nombre
  */
-router.post('/', authenticateToken, categoryController.createCategory);
+router.post("/", authenticateToken, categoryController.createCategory);
 
 /**
  * @swagger
@@ -50,7 +50,7 @@ router.post('/', authenticateToken, categoryController.createCategory);
  *       401:
  *         description: No autorizado
  */
-router.get('/', authenticateToken, categoryController.getAllCategories);
+router.get("/", authenticateToken, categoryController.getAllCategories);
 
 /**
  * @swagger
@@ -75,7 +75,7 @@ router.get('/', authenticateToken, categoryController.getAllCategories);
  *       404:
  *         description: Categoría no encontrada
  */
-router.get('/:id', authenticateToken, categoryController.getCategoryById);
+router.get("/:id", authenticateToken, categoryController.getCategoryById);
 
 /**
  * @swagger
@@ -114,7 +114,7 @@ router.get('/:id', authenticateToken, categoryController.getCategoryById);
  *       409:
  *         description: Ya existe una categoría con ese nombre
  */
-router.put('/:id', authenticateToken, categoryController.updateCategory);
+router.put("/:id", authenticateToken, categoryController.updateCategory);
 
 /**
  * @swagger
@@ -141,6 +141,6 @@ router.put('/:id', authenticateToken, categoryController.updateCategory);
  *       400:
  *         description: No se puede eliminar la categoría porque tiene componentes asociados
  */
-router.delete('/:id', authenticateToken, categoryController.deleteCategory);
+router.delete("/:id", authenticateToken, categoryController.deleteCategory);
 
 module.exports = router;

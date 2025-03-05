@@ -61,7 +61,7 @@ export default class RegisterComponent implements OnInit {
 
     // Validar email
     const email = this.userData.email.trim();
-    const emailRegex = /^[a-zA-Z][a-zA-Z]?[a-zA-Z0-9]*@espe\.edu\.ec$/;  // Segunda letra opcional pero debe ser letra
+    const emailRegex = /^[a-zA-Z][a-zA-Z]?[a-zA-Z0-9]*@espe\.edu\.ec$/;
     const hasTwoConsecutiveDots = /\.{2,}/.test(email);
 
     if (!email) {
@@ -113,23 +113,26 @@ export default class RegisterComponent implements OnInit {
   // Método para manejar el registro de usuario
   onSubmit(): void {
     this.showErrors = true;
-
+  
     if (!this.validateForm()) {
       this.sweetalertService.error('Por favor, complete todos los campos correctamente.');
       return;
     }
-
+  
     const userData = {
       email: this.userData.email,
       password: this.userData.password,
       name: this.userData.name,
       lastName: this.userData.lastName
     };
-
+  
     this.userService.register(userData).subscribe({
       next: (response) => {
-        this.sweetalertService.success('Registro exitoso. Por favor, inicia sesión.');
-        this.router.navigate(['/login']);
+        this.sweetalertService.success(
+          'Registro exitoso. Se ha enviado un correo electrónico para activar tu cuenta. ' +
+          'Por favor, revisa tu bandeja de entrada y sigue las instrucciones.'
+        );
+        this.router.navigate(['/registration-success']);
       },
       error: (error) => {
         const errorMessage = error.error?.message || 'Hubo un problema al registrar el usuario. Por favor, intenta nuevamente.';

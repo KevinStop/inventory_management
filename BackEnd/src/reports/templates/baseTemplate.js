@@ -16,7 +16,7 @@ class BaseReportTemplate {
 
     // Agregar subtítulo si existe
     if (this.subtitle) {
-      doc.doc.fontSize(14).text(this.subtitle, { align: "center" }).moveDown();
+      doc.doc.fontSize(12).text(this.subtitle, { align: "center" }).moveDown();
     }
 
     return doc;

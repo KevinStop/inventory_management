@@ -4,6 +4,8 @@ const userController = require('../controllers/userController');
 const upload = require('../config/uploadConfig');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
+router.put('/theme', authenticateToken,userController.updateUserTheme);
+
 /**
  * @swagger
  * /users/register:
@@ -220,5 +222,9 @@ router.put('/:id', authenticateToken, upload.single('image'), userController.upd
  *         description: Usuario no encontrado
  */
 router.put('/:id/deactivate', authenticateToken, userController.deactivateUser);
+
+router.get('/verify/:userId/:token', userController.verifyUserAccount);
+router.get('/cancel/:userId/:token', userController.cancelUserAccount);
+router.post('/resend-verification', userController.resendVerificationEmail);
 
 module.exports = router;

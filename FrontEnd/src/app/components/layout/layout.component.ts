@@ -4,6 +4,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { FooterComponent } from '../footer/footer.component';
 import { RouterOutlet } from '@angular/router';
 import { initFlowbite } from 'flowbite';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-layout',
@@ -12,23 +13,30 @@ import { initFlowbite } from 'flowbite';
   templateUrl: './layout.component.html',
 })
 export default class LayoutComponent implements OnInit {
-
-  constructor() { }
-
+  
+  constructor(private userService: UserService) { }
+  
   ngOnInit(): void {
     initFlowbite();
+    
+    // Cargar tema del usuario desde el backend
+    this.userService.getUserDetails().subscribe(
+      (user) => {
+        this.applyUserTheme(user.theme || 'light');
+      },
+      (error) => {
+        console.error('Error al obtener detalles del usuario:', error);
+        // Usar light como fallback
+        this.applyUserTheme('light');
+      }
+    );
+  }
   
-    const themeToggleBtn = document.getElementById('theme-toggle');
+  private applyUserTheme(theme: string): void {
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-  
-    // Establecer tema claro por defecto si no existe en localStorage
-    if (!localStorage.getItem('color-theme')) {
-      localStorage.setItem('color-theme', 'light');
-    }
-  
-    // Aplicar el tema almacenado
-    if (localStorage.getItem('color-theme') === 'dark') {
+    
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       themeToggleDarkIcon?.classList.remove('hidden');
       themeToggleLightIcon?.classList.add('hidden');
@@ -37,19 +45,5 @@ export default class LayoutComponent implements OnInit {
       themeToggleLightIcon?.classList.remove('hidden');
       themeToggleDarkIcon?.classList.add('hidden');
     }
-  
-    themeToggleBtn?.addEventListener('click', () => {
-      themeToggleDarkIcon?.classList.toggle('hidden');
-      themeToggleLightIcon?.classList.toggle('hidden');
-  
-      if (localStorage.getItem('color-theme') === 'dark') {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('color-theme', 'light');
-      } else {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('color-theme', 'dark');
-      }
-    });
-  }  
-
+  }
 }

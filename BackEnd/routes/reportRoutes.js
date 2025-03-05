@@ -91,4 +91,12 @@ router.get(
 // Ruta para vista previa de préstamos no devueltos
 router.get("/not-returned/preview", reportController.getNotReturnedPreview);
 
+// Nueva ruta para obtener tipos de solicitud disponibles
+router.get("/request-types", authenticateToken, (req, res) => {
+  // Este endpoint podría obtener los tipos de request-types de la base de datos
+  // o simplemente devolver un array fijo si los tipos son predefinidos
+  const requestTypes = ["Solicitud Regular", "Préstamo Académico", "Práctica", "Investigación"];
+  res.status(200).json({ requestTypes });
+});
+
 module.exports = router;

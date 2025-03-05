@@ -114,8 +114,6 @@ export default class ElectronicComponentComponent implements OnInit {
       categoryId: component.categoryId,
       isActive: component.isActive
     });
-    console.log(component.imageUrl)
-    // Añade esto para la imagen actual
     this.currentImageUrl = component.imageUrl ? 
       `${this.apiUrl}${component.imageUrl}` : 
       `${this.apiUrl}/assets/default-component.png`;

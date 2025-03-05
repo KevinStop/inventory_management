@@ -104,6 +104,28 @@ const passwordResetTemplate = (data) => `
   </div>
 `;
 
+const accountVerificationTemplate = (data) => `
+  <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 5px;">
+    <h2 style="color: #333;">Verificación de cuenta</h2>
+    <p>Estimado/a ${data.userName},</p>
+    <p>Gracias por registrarte en nuestro sistema de gestión de inventarios. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${data.verificationUrl}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Activar mi cuenta</a>
+    </div>
+    
+    <p>Si no has solicitado esta cuenta o no reconoces esta solicitud, puedes ignorar este correo o hacer clic en el siguiente enlace para eliminar la cuenta:</p>
+    
+    <div style="text-align: center; margin: 20px 0;">
+      <a href="${data.cancelUrl}" style="background-color: #f44336; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">No he solicitado esta cuenta</a>
+    </div>
+    
+    <p style="font-size: 12px; color: #777; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+      Este enlace expirará en 24 horas. Si no activas tu cuenta en este tiempo, necesitarás registrarte nuevamente.
+    </p>
+  </div>
+`;
+
 module.exports = {
   newRequestTemplate,
   approvedRequestTemplate,
@@ -111,5 +133,6 @@ module.exports = {
   returnDateTemplate,
   adminReturnDateTemplate,
   upcomingReturnTemplate,
-  passwordResetTemplate
+  passwordResetTemplate,
+  accountVerificationTemplate
 };

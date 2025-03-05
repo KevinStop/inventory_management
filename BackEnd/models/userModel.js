@@ -4,38 +4,54 @@ const path = require("path");
 const fs = require("fs");
 const prisma = new PrismaClient();
 
+const crypto = require('crypto');
+
+// Función para generar token aleatorio
+const generateVerificationToken = () => {
+  return crypto.randomBytes(32).toString('hex');
+}
+
 // Crear un usuario
 const createUser = async (data) => {
   try {
     if (!data.email || !data.password) {
-      throw new Error("El email y la contraseña son obligatorios");
+      throw new Error("El correo electrónico y la contraseña son obligatorios");
     }
 
+    // Hashear la contraseña
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
+    // Asignar una imagen predeterminada si no se proporciona una
     if (!data.imageUrl) {
       data.imageUrl = "/assets/user.png";
     }
 
+    // Generar token de verificación
+    const verificationToken = generateVerificationToken();
+
+    // Eliminar campos no necesarios
     delete data.confirmPassword;
 
+    // Crear el usuario en estado inactivo con token de verificación
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: data.password,
         name: data.name.toUpperCase(),
-        lastName: data.lastName.toUpperCase(), 
+        lastName: data.lastName.toUpperCase(),
         imageUrl: data.imageUrl,
-        role: "user"
+        role: "user",
+        isActive: false, // Por defecto inactivo
+        verificationToken: verificationToken
       },
     });
 
-    return user;
+    return { user, verificationToken };
   } catch (error) {
     if (error.code === "P2002") {
-      throw new Error("El email ya está registrado");
+      throw new Error("Correo electrónico ya registrado");
     }
     console.error("Error al crear el usuario:", error);
     throw new Error(error.message || "Hubo un problema al crear el usuario");
@@ -56,7 +72,7 @@ const verifyUserCredentials = async (email, password) => {
     if (!isValid) {
       throw new Error("Usuario o contraseña incorrectos");
     }
-
+    
     return user;
   } catch (error) {
     throw new Error("Error en la verificación de credenciales");
@@ -128,7 +144,7 @@ const deactivateUser = async (id) => {
 const getUserById = async (id) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { userId: id },
+      where: { userId: Number(id) },
       select: {
         userId: true,
         email: true,
@@ -136,6 +152,7 @@ const getUserById = async (id) => {
         lastName: true,
         role: true,
         imageUrl: true,
+        theme: true,
       },
     });
 
@@ -145,7 +162,6 @@ const getUserById = async (id) => {
 
     return user;
   } catch (error) {
-    console.error("Error al obtener el usuario por ID:", error);
     throw new Error(error.message || "Hubo un problema al obtener el usuario");
   }
 };
@@ -218,6 +234,28 @@ const requestPasswordReset = async (email) => {
   }
 };
 
+const updateUserTheme = async (userId, theme) => {
+  try {
+    if (theme !== 'light' && theme !== 'dark') {
+      throw new Error("El tema debe ser 'light' o 'dark'");
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { userId: Number(userId) },
+      data: { theme },
+      select: {
+        userId: true,
+        theme: true
+      }
+    });
+
+    return updatedUser;
+  } catch (error) {
+    console.error("Error al actualizar el tema del usuario:", error);
+    throw new Error(error.message || "Hubo un problema al actualizar el tema");
+  }
+};
+
 module.exports = {
   createUser,
   updateUser,
@@ -225,5 +263,6 @@ module.exports = {
   verifyUserCredentials,
   getUserById,
   getAllUsers,
-  requestPasswordReset
+  requestPasswordReset,
+  updateUserTheme
 };

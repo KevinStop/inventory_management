@@ -10,10 +10,10 @@
           <!-- Encabezado -->
           <div>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
-              Bienvenido de vuelta
+              Bienvenido
             </h2>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Ingresa a tu cuenta institucional para continuar
+              Ingresa con tu cuenta institucional para continuar
             </p>
           </div>
 
@@ -55,13 +55,23 @@
               Iniciar Sesión
             </button>
 
-            <!-- Agregar este div después del botón -->
-            <div class="text-center mt-4">
+            <!-- Opciones de registro y verificación -->
+            <div class="text-center mt-4 space-y-2">
+              <!-- Enlace para crear cuenta -->
               <p class="text-sm text-gray-600 dark:text-gray-400">
                 ¿No tienes una cuenta?
                 <a routerLink="/register"
                   class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 hover:underline">
                   Crear nueva cuenta
+                </a>
+              </p>
+              
+              <!-- Nuevo enlace para reenviar verificación -->
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                ¿No recibiste el correo de verificación?
+                <a routerLink="/resend-verification"
+                  class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 hover:underline">
+                  Solicitar nuevo correo
                 </a>
               </p>
             </div>

@@ -30,14 +30,23 @@ export default class LoginComponent {
       this.sweetalertService.error('Por favor, Complete los campos');
       return;
     }
-
+  
     this.userService.login(this.credentials).subscribe({
-      next: () => {
-        this.router.navigate(['/moduleSelection']);
+      next: (user) => {
+        if (user.role === 'admin') {
+          this.router.navigate(['/home/electronicComponent']);
+        } else {
+          this.router.navigate(['/home/viewComponents']);
+        }
       },
       error: (error) => {
-        const errorMessage = error.error?.message || 'Credenciales incorrectas, por favor intenta nuevamente.';
-        this.sweetalertService.error(errorMessage);
+        let errorMessage = 'Credenciales incorrectas, por favor intenta nuevamente.';
+        
+        // Verificar si es un error de cuenta no activada
+        if (error.error?.message && error.error.message.includes('no está activada')) {
+          errorMessage = 'Tu cuenta aún no está activada. Por favor, verifica tu correo electrónico para completar el registro.';
+        }
+        this.sweetalertService.error(error.error?.message || errorMessage);
       }
     });
   }

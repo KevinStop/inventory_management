@@ -1,4 +1,4 @@
-<section class="bg-white py-8 dark:bg-gray-900 rounded-lg">
+<section class="bg-white py-5 antialiased dark:bg-gray-900 rounded-lg">
   <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
     <div class="mx-auto max-w-5xl">
       <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
@@ -28,9 +28,11 @@
 
       <!-- Formulario de filtros -->
       <div *ngIf="showFilters" class="mt-8 bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white text-center mb-4">Filtros del Reporte</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white text-center mb-4">
+          {{ selectedReport ? 'Filtros del Reporte' : 'Seleccione un reporte para visualizar los filtros' }}
+        </h3>
 
-        <form [formGroup]="filterForm" (ngSubmit)="generateReport()" class="space-y-4">
+        <form *ngIf="selectedReport" [formGroup]="filterForm" (ngSubmit)="generateReport()" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div *ngIf="filterForm.get('startDate')" class="space-y-2">
               <label for="startDate" class="block text-sm font-medium text-gray-900 dark:text-white">
@@ -59,8 +61,67 @@
             </div>
           </div>
 
+          <!-- Componente especial para Tipos de Solicitud -->
+          <div *ngIf="filterForm.get('requestTypes')" class="space-y-2">
+            <div class="flex items-center">
+              <label class="block text-sm font-medium text-gray-900 dark:text-white">
+                {{ getFilterLabel('requestTypes') }}
+                <span *ngIf="isFilterRequired('requestTypes')" class="text-red-500">*</span>
+              </label>
+
+              <!-- Ícono de información con tooltip -->
+              <div class="flex items-center">
+                <label class="block text-sm font-medium text-gray-900 dark:text-white">
+                  {{ getFilterLabel('requestTypes') }}
+                  <span *ngIf="isFilterRequired('requestTypes')" class="text-red-500">*</span>
+                </label>
+
+                <!-- Tooltip con CSS puro - aparece a la derecha -->
+                <div class="relative inline-block ml-1 group">
+                  <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <div
+                    class="absolute left-full ml-2 top-1/2 -translate-y-1/2 w-64 bg-gray-900 text-white text-xs rounded py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                    Si no selecciona ningún tipo de solicitud, el reporte incluirá automáticamente todos los tipos
+                    disponibles.
+                    <div
+                      class="absolute top-1/2 -translate-y-1/2 right-full mr-0 h-0 w-0 border-8 border-r-gray-900 border-t-transparent border-l-transparent border-b-transparent">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div *ngFor="let type of requestTypes" class="flex items-center">
+                <input type="checkbox" [id]="'requestType-' + type" [checked]="isRequestTypeSelected(type)"
+                  (change)="onRequestTypeChange(type, $event)"
+                  class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label [for]="'requestType-' + type" class="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {{ type }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Mensaje para clarificar la selección actual -->
+            <p class="text-xs text-gray-500 mt-2">
+              {{ selectedRequestTypes.length ? 'Filtrando por: ' + selectedRequestTypes.join(', ') : 'Mostrando
+              resultados para todos los tipos de solicitud' }}
+            </p>
+
+            <p *ngIf="isFieldInvalid('requestTypes')" class="text-red-500 text-xs mt-1">
+              Seleccione al menos un tipo de solicitud
+            </p>
+          </div>
+
           <div *ngFor="let filter of filterForm.controls | keyvalue">
-            <ng-container *ngIf="filter.key !== 'startDate' && filter.key !== 'endDate'">
+            <ng-container
+              *ngIf="filter.key !== 'startDate' && filter.key !== 'endDate' && filter.key !== 'requestTypes'">
               <div class="space-y-2">
                 <label [for]="filter.key" class="block text-sm font-medium text-gray-900 dark:text-white">
                   {{ getFilterLabel(filter.key) }}
@@ -70,21 +131,113 @@
                 <ng-container [ngSwitch]="getFilterType(filter.key)">
                   <ng-container *ngSwitchCase="'select'">
                     <ng-container *ngIf="filter.key === 'userId'">
-                      <div class="flex flex-col gap-2">
-                        <input type="text" [(ngModel)]="searchTerm" (input)="filterUsers()"
-                          [ngModelOptions]="{standalone: true}" placeholder="Buscar usuario por nombre..."
+                      <div class="relative" #userSearchInput>
+                        <input type="text" [(ngModel)]="searchTerm" [ngModelOptions]="{standalone: true}"
+                          (input)="onUserSearchInput($event)" (focus)="showUserDropdown = true"
+                          placeholder="Buscar usuario por nombre..."
                           class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        <select [formControlName]="filter.key"
-                        class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 max-h-48 overflow-y-auto">
-                          <option value="">Seleccione un usuario</option>
-                          <option *ngFor="let user of filteredUsers" [value]="user.userId">{{ user.name }}</option>
-                        </select>
+
+                        <!-- Usuario seleccionado - campo oculto -->
+                        <input type="hidden" [formControlName]="filter.key">
+
+                        <!-- Dropdown de resultados -->
+                        <div *ngIf="showUserDropdown && filteredUsers.length > 0"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 max-h-60 overflow-y-auto dark:bg-gray-700 dark:border-gray-600 shadow-lg">
+                          <div *ngFor="let user of filteredUsers" (click)="selectUser(user)"
+                            class="px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 cursor-pointer dark:text-white dark:hover:bg-gray-600">
+                            {{ user.name }}
+                          </div>
+                        </div>
+
+                        <!-- Mensaje cuando no hay resultados -->
+                        <div *ngIf="showUserDropdown && filteredUsers.length === 0 && searchTerm"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 px-4 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 shadow-lg">
+                          No se encontraron usuarios con ese nombre
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngIf="filter.key === 'category'">
+                      <div class="relative" #categorySearchInput>
+                        <input type="text" [(ngModel)]="categorySearchTerm" [ngModelOptions]="{standalone: true}"
+                          (input)="onCategorySearchInput($event)" (focus)="showCategoryDropdown = true"
+                          placeholder="Buscar categoría..."
+                          class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+
+                        <!-- Categoría seleccionada - campo oculto -->
+                        <input type="hidden" [formControlName]="filter.key">
+
+                        <!-- Dropdown de resultados -->
+                        <div *ngIf="showCategoryDropdown && filteredCategories.length > 0"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 max-h-60 overflow-y-auto dark:bg-gray-700 dark:border-gray-600 shadow-lg">
+                          <div *ngFor="let category of filteredCategories" (click)="selectCategory(category)"
+                            class="px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 cursor-pointer dark:text-white dark:hover:bg-gray-600">
+                            {{ category.name }}
+                          </div>
+                        </div>
+
+                        <!-- Mensaje cuando no hay resultados -->
+                        <div *ngIf="showCategoryDropdown && filteredCategories.length === 0 && categorySearchTerm"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 px-4 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 shadow-lg">
+                          No se encontraron categorías con ese nombre
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngIf="filter.key === 'componentId'">
+                      <div class="relative" #componentSearchInput>
+                        <input type="text" [(ngModel)]="componentSearchTerm" [ngModelOptions]="{standalone: true}"
+                          (input)="onComponentSearchInput($event)" (focus)="showComponentDropdown = true"
+                          placeholder="Buscar componente..."
+                          class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+
+                        <!-- Componente seleccionado - campo oculto -->
+                        <input type="hidden" [formControlName]="filter.key">
+
+                        <!-- Dropdown de resultados -->
+                        <div *ngIf="showComponentDropdown && filteredComponents.length > 0"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 max-h-60 overflow-y-auto dark:bg-gray-700 dark:border-gray-600 shadow-lg">
+                          <div *ngFor="let component of filteredComponents" (click)="selectComponent(component)"
+                            class="px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 cursor-pointer dark:text-white dark:hover:bg-gray-600">
+                            {{ component.name }}
+                          </div>
+                        </div>
+
+                        <!-- Mensaje cuando no hay resultados -->
+                        <div *ngIf="showComponentDropdown && filteredComponents.length === 0 && componentSearchTerm"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 px-4 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 shadow-lg">
+                          No se encontraron componentes con ese nombre
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngIf="filter.key === 'academicPeriodId'">
+                      <div class="relative" #periodSearchInput>
+                        <input type="text" [(ngModel)]="periodSearchTerm" [ngModelOptions]="{standalone: true}"
+                          (input)="onPeriodSearchInput($event)" (focus)="showPeriodDropdown = true"
+                          placeholder="Buscar período académico..."
+                          class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+
+                        <!-- Período seleccionado - campo oculto -->
+                        <input type="hidden" [formControlName]="filter.key">
+
+                        <!-- Dropdown de resultados -->
+                        <div *ngIf="showPeriodDropdown && filteredPeriods.length > 0"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 max-h-60 overflow-y-auto dark:bg-gray-700 dark:border-gray-600 shadow-lg">
+                          <div *ngFor="let period of filteredPeriods" (click)="selectPeriod(period)"
+                            class="px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 cursor-pointer dark:text-white dark:hover:bg-gray-600">
+                            {{ period.name }}
+                          </div>
+                        </div>
+
+                        <!-- Mensaje cuando no hay resultados -->
+                        <div *ngIf="showPeriodDropdown && filteredPeriods.length === 0 && periodSearchTerm"
+                          class="absolute z-10 w-full bg-white rounded-lg border border-gray-300 mt-1 px-4 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 shadow-lg">
+                          No se encontraron períodos con ese nombre
+                        </div>
                       </div>
                     </ng-container>
 
-                    <ng-container *ngIf="filter.key !== 'userId'">
+                    <ng-container *ngIf="filter.key !== 'userId' && filter.key !== 'category' && filter.key !== 'academicPeriodId' && filter.key !== 'componentId'">
                       <select [formControlName]="filter.key"
-                      class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 max-h-48 overflow-y-auto">
+                        class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 max-h-48 overflow-y-auto">
                         <option value="">Seleccione una opción</option>
                         <ng-container [ngSwitch]="filter.key">
                           <ng-container *ngSwitchCase="'status'">
@@ -94,18 +247,6 @@
                           <ng-container *ngSwitchCase="'movementType'">
                             <option value="ingreso">Ingreso</option>
                             <option value="egreso">Egreso</option>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'category'">
-                            <option *ngFor="let category of categories" [value]="category.name">{{ category.name }}
-                            </option>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'componentId'">
-                            <option *ngFor="let component of components" [value]="component.id">{{ component.name }}
-                            </option>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'academicPeriodId'">
-                            <option *ngFor="let period of academicPeriods" [value]="period.id">{{ period.name }}
-                            </option>
                           </ng-container>
                         </ng-container>
                       </select>
@@ -143,6 +284,13 @@
             </button>
           </div>
         </form>
+
+        <!-- Mensaje cuando no hay reporte seleccionado -->
+        <div *ngIf="!selectedReport" class="text-center p-4">
+          <p class="text-gray-600 dark:text-gray-400">
+            Por favor, seleccione un tipo de reporte para visualizar las opciones de filtrado.
+          </p>
+        </div>
       </div>
 
       <!-- Vista previa de resultados -->
@@ -156,14 +304,13 @@
             Generar PDF
           </button>
         </div>
-
-        <div class="card">
-          <!-- Component template -->
+      
+        <div class="overflow-hidden rounded-lg">
           <p-table [value]="previewData" [rows]="5" [paginator]="true" [rowsPerPageOptions]="[5,10,20]"
             [showCurrentPageReport]="true"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
             styleClass="preview-table">
-
+      
             <ng-template pTemplate="header">
               <tr>
                 <th *ngFor="let header of previewHeaders" class="px-6 py-3">
@@ -171,20 +318,35 @@
                 </th>
               </tr>
             </ng-template>
-
+      
             <ng-template pTemplate="body" let-row>
               <tr>
                 <td *ngFor="let cell of row" class="px-6 py-4">
-                  {{cell}}
+                  {{cell !== 'N/A' ? cell : '--'}}
                 </td>
               </tr>
+            </ng-template>
+      
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td [attr.colspan]="previewHeaders.length">
+                  No se encontraron resultados para los filtros seleccionados
+                </td>
+              </tr>
+            </ng-template>
+      
+            <ng-template pTemplate="paginatorleft">
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                Total de registros: {{previewData.length}}
+              </span>
             </ng-template>
           </p-table>
         </div>
       </div>
-
+      
       <!-- Mensaje cuando no hay resultados -->
-      <div *ngIf="previewData?.length === 0" class="mt-8 text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div *ngIf="previewData?.length === 0 && selectedReport" 
+           class="mt-8 text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <p class="text-gray-600 dark:text-gray-400">
           No se encontraron resultados para los filtros seleccionados
         </p>

@@ -16,23 +16,24 @@ class ReportService {
       const template = new BaseReportTemplate(
         "REPORTE DE PRÉSTAMOS POR PERÍODO"
       );
-
+  
       // Obtener datos
       const periodId = filters.academicPeriodId;
-      // Pasar todos los filtros al modelo
+      // Pasar todos los filtros al modelo, incluido el tipo de solicitud
       const loans = await loanModel.getLoansByPeriod(periodId, {
         startDate: filters.startDate,
         endDate: filters.endDate,
         status: filters.status,
+        requestTypes: filters.requestTypes, // Añadir el nuevo filtro
       });
-
+  
       // Validar datos
       if (!Array.isArray(loans) || !loans.length) {
         throw new Error(
           "No hay préstamos registrados para los filtros seleccionados"
         );
       }
-
+  
       // Agregar información del filtrado al resumen
       const summary = {
         "Total de préstamos": loans.length,
@@ -51,11 +52,19 @@ class ReportService {
         }`,
         "Estado filtrado": filters.status || "Todos",
       };
-
+  
+      // Añadir información sobre tipos de solicitud al resumen
+      if (filters.requestTypes && filters.requestTypes.length) {
+        summary["Tipos de solicitud"] = filters.requestTypes.join(', ');
+      } else {
+        summary["Tipos de solicitud"] = "Todos";
+      }
+  
       // Preparar datos para la tabla
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadido
         "Fecha Inicio",
         "Estado",
         "Fecha Devolución",
@@ -63,16 +72,32 @@ class ReportService {
       const data = loans.map((loan) => [
         loan.user?.name ?? "Desconocido",
         loan.component?.name ?? "Sin nombre",
+        loan.request?.typeRequest ?? "No especificado", // Añadido
         template.formatter?.formatDateTime(loan.startDate) ?? "Sin fecha",
         template.formatter?.formatLoanStatus(loan.status) ??
           "Estado desconocido",
         template.formatter?.formatDateTime(loan.endDate) ?? "Sin fecha",
       ]);
-
+  
       // Generar PDF
       const doc = await template.initializeReport(filters);
       template.addSummarySection(doc, summary);
       template.addDataTable(doc, headers, data);
+      
+      // Añadir notas si es necesario según tipos de solicitud
+      const uniqueTypes = [...new Set(loans.map(l => l.request?.typeRequest))];
+      if (uniqueTypes.length > 1) {
+        const typeDistribution = uniqueTypes.map(type => {
+          const count = loans.filter(l => l.request?.typeRequest === type).length;
+          return `${type || 'No especificado'}: ${count} préstamos`;
+        });
+        
+        template.addNotes(doc, [
+          "Distribución por tipo de solicitud:",
+          ...typeDistribution
+        ]);
+      }
+      
       return template.finalizeReport(doc);
     } catch (error) {
       throw new Error(`Error generando reporte de préstamos: ${error.message}`);
@@ -85,19 +110,19 @@ class ReportService {
       const template = new BaseReportTemplate(
         "REPORTE DE COMPONENTES MÁS SOLICITADOS"
       );
-
-      // Obtener datos usando los filtros
+  
+      // Obtener datos usando los filtros actualizados
       const componentStats = await loanModel.getMostRequestedComponents(
         filters
       );
-
+  
       // Validar datos
       if (!componentStats.length) {
         throw new Error(
           "No hay datos de componentes solicitados para los filtros seleccionados"
         );
       }
-
+  
       // Preparar información del período de reporte
       const reportPeriod =
         filters.startDate && filters.endDate
@@ -105,8 +130,8 @@ class ReportService {
               filters.startDate
             )} - ${template.formatter.formatDate(filters.endDate)}`
           : "Período: Todo el historial";
-
-      // Preparar resumen
+  
+      // Preparar resumen, añadiendo tipos de solicitud
       const summary = {
         "Total de componentes": componentStats.length,
         "Período del reporte": reportPeriod,
@@ -117,31 +142,49 @@ class ReportService {
           0
         ),
       };
-
+  
+      // Añadir tipos de solicitud al resumen
+      if (filters.requestTypes && filters.requestTypes.length) {
+        summary["Tipos de solicitud"] = filters.requestTypes.join(', ');
+      } else {
+        summary["Tipos de solicitud"] = "Todos";
+      }
+  
       // Preparar datos para la tabla
       const headers = [
         "Componente",
         "Categoría",
+        "Tipo de Solicitud", // Añadido
         "Total Préstamos",
         "Stock Actual",
         "Último Préstamo",
       ];
-
+  
       const data = componentStats.map((stat) => [
         stat.component.name,
         stat.component.category.name,
+        stat.requestType || "Todos", // Añadido
         stat._count.componentId.toString(),
         stat.component.quantity.toString(),
         template.formatter.formatDate(stat.component.updatedAt),
       ]);
-
+  
       // Generar PDF
       const doc = await template.initializeReport(filters);
       // Agregar sección de resumen
       template.addSummarySection(doc, summary);
       // Agregar tabla de datos
       template.addDataTable(doc, headers, data);
-
+      
+      // Añadir notas específicas sobre tipos de solicitud si es relevante
+      if (filters.requestTypes && filters.requestTypes.length) {
+        const notes = [
+          "Este reporte está filtrado por los siguientes tipos de solicitud:",
+          filters.requestTypes.join(', ')
+        ];
+        template.addNotes(doc, notes);
+      }
+  
       return template.finalizeReport(doc);
     } catch (error) {
       console.error("Error en generateMostRequestedComponentsReport:", error);
@@ -155,17 +198,17 @@ class ReportService {
   async generateActiveLoansReport(filters) {
     try {
       const template = new BaseReportTemplate("REPORTE DE PRÉSTAMOS ACTIVOS");
-
+  
       // Obtener datos usando los filtros
       const activeLoans = await loanModel.getCurrentLoans(filters);
-
+  
       // Validar datos
       if (!activeLoans.length) {
         throw new Error(
           "No hay préstamos activos para los filtros seleccionados"
         );
       }
-
+  
       // Preparar resumen
       const summary = {
         "Total de préstamos activos": activeLoans.length,
@@ -188,48 +231,73 @@ class ReportService {
           ).startDate
         ),
       };
-
+  
+      // Añadir tipos de solicitud al resumen
+      if (filters.requestTypes && filters.requestTypes.length) {
+        summary["Tipos de solicitud"] = filters.requestTypes.join(', ');
+      } else {
+        summary["Tipos de solicitud"] = "Todos";
+      }
+  
+      // Añadir estadísticas por tipo de solicitud si es relevante
+      if (activeLoans.length > 0) {
+        const typeCount = {};
+        activeLoans.forEach(loan => {
+          const type = loan.request?.typeRequest || "No especificado";
+          typeCount[type] = (typeCount[type] || 0) + 1;
+        });
+        
+        // Añadir al resumen si hay más de un tipo
+        if (Object.keys(typeCount).length > 1) {
+          Object.entries(typeCount).forEach(([type, count]) => {
+            summary[`Préstamos de tipo "${type}"`] = count;
+          });
+        }
+      }
+  
       // Preparar datos para la tabla
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadido
         "Fecha Inicio",
         "Días Transcurridos",
         "Estado",
         "Observaciones",
       ];
-
+  
       const data = activeLoans.map((loan) => {
         const daysDiff =
           (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24);
-
+  
         return [
           loan.user.name,
           loan.component.name,
+          loan.request?.typeRequest || "No especificado", // Añadido
           template.formatter.formatDateTime(loan.startDate),
           template.formatter.formatMetrics(daysDiff, "duration"),
           template.formatter.formatLoanStatus(loan.status),
           daysDiff > 30 ? "Préstamo extendido" : "En tiempo normal",
         ];
       });
-
+  
       // Ordenar por días transcurridos (descendente)
       data.sort((a, b) => {
-        const daysA = parseFloat(a[3]);
-        const daysB = parseFloat(b[3]);
+        const daysA = parseFloat(a[4]);
+        const daysB = parseFloat(b[4]);
         return daysB - daysA;
       });
-
+  
       // Generar PDF
       const doc = await template.initializeReport(filters);
       // Agregar sección de resumen
       template.addSummarySection(doc, summary);
       // Agregar tabla de datos
       template.addDataTable(doc, headers, data);
-
+  
       // Agregar notas al pie si hay préstamos extendidos
       const extendedLoans = data.filter(
-        (row) => row[5] === "Préstamo extendido"
+        (row) => row[6] === "Préstamo extendido"
       );
       if (extendedLoans.length > 0) {
         const notes = [
@@ -238,7 +306,7 @@ class ReportService {
         ];
         template.addNotes(doc, notes);
       }
-
+  
       return template.finalizeReport(doc);
     } catch (error) {
       console.error("Error en generateActiveLoansReport:", error);
@@ -477,24 +545,24 @@ class ReportService {
       const template = new BaseReportTemplate(
         "REPORTE DE PRÉSTAMOS NO DEVUELTOS"
       );
-
+  
       // Obtener datos con filtros
       const notReturnedLoans = await loanModel.getNotReturnedLoans(filters);
-
+  
       // Validar datos
       if (!notReturnedLoans.length) {
         throw new Error(
           "No hay préstamos no devueltos para los filtros seleccionados"
         );
       }
-
+  
       // Calcular estadísticas para el resumen
       const totalDays = notReturnedLoans.reduce((sum, loan) => {
         return (
           sum + (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24)
         );
       }, 0);
-
+  
       // Preparar resumen
       const summary = {
         "Total préstamos no devueltos": notReturnedLoans.length,
@@ -515,7 +583,7 @@ class ReportService {
           ).startDate
         ),
       };
-
+  
       // Agregar información de filtros al resumen
       if (filters.userId) {
         const userName = notReturnedLoans.find(
@@ -528,18 +596,58 @@ class ReportService {
           filters.startDate
         )} - ${template.formatter.formatDate(filters.endDate)}`;
       }
-
+      
+      // Añadir tipos de solicitud al resumen
+      if (filters.requestTypes && filters.requestTypes.length) {
+        summary["Tipos de solicitud"] = filters.requestTypes.join(', ');
+        
+        // Agregar estadísticas por tipo de solicitud
+        const typeStats = {};
+        notReturnedLoans.forEach(loan => {
+          const type = loan.request?.typeRequest || "No especificado";
+          if (filters.requestTypes.includes(type)) {
+            typeStats[type] = (typeStats[type] || 0) + 1;
+          }
+        });
+        
+        // Añadir estas estadísticas al resumen
+        Object.entries(typeStats).forEach(([type, count]) => {
+          summary[`Préstamos de tipo "${type}" no devueltos`] = count;
+        });
+      } else {
+        summary["Tipos de solicitud"] = "Todos";
+        
+        // Mostrar distribución por tipo aunque no esté filtrado
+        const typeDistribution = {};
+        notReturnedLoans.forEach(loan => {
+          const type = loan.request?.typeRequest || "No especificado";
+          typeDistribution[type] = (typeDistribution[type] || 0) + 1;
+        });
+        
+        // Añadir los 3 tipos más comunes si hay múltiples
+        const types = Object.entries(typeDistribution)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+          
+        if (types.length > 1) {
+          summary["Tipos principales"] = types
+            .map(([type, count]) => `${type}: ${count}`)
+            .join(', ');
+        }
+      }
+  
       // Preparar datos para la tabla
       const headers = [
         "Usuario",
         "Componente",
+        "Tipo de Solicitud", // Añadido
         "Fecha Préstamo",
         "Días Transcurridos",
         "Estado Final",
         "Observaciones",
         "Detalles de Solicitud",
       ];
-
+  
       // Ordenar por días transcurridos (descendente)
       notReturnedLoans.sort(
         (a, b) =>
@@ -547,14 +655,15 @@ class ReportService {
           new Date(a.startDate) -
           (new Date() - new Date(b.startDate))
       );
-
+  
       const data = notReturnedLoans.map((loan) => {
         const daysPassed =
           (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24);
-
+  
         return [
           loan.user.name,
           loan.component.name,
+          loan.request?.typeRequest || "No especificado", // Añadido
           template.formatter.formatDateTime(loan.startDate),
           template.formatter.formatMetrics(daysPassed, "duration"),
           template.formatter.formatReturnStatus(
@@ -567,23 +676,23 @@ class ReportService {
           loan.request.adminNotes || "Sin observaciones adicionales",
         ];
       });
-
+  
       // Generar PDF
       const doc = await template.initializeReport(filters);
-
+  
       // Agregar sección de resumen
       template.addSummarySection(doc, summary);
-
+  
       // Agregar tabla de datos
       template.addDataTable(doc, headers, data);
-
+  
       // Agregar notas según la gravedad de la situación
       const notes = [];
       const longOverdueLoans = notReturnedLoans.filter(
         (loan) =>
           (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24) > 30
       );
-
+  
       if (longOverdueLoans.length > 0) {
         notes.push(
           `⚠️ Hay ${longOverdueLoans.length} préstamo(s) con más de 30 días sin devolución.`
@@ -592,14 +701,34 @@ class ReportService {
           "Se recomienda iniciar procedimiento de seguimiento especial para estos casos."
         );
       }
-
+  
+      // Análisis por tipo de solicitud para las notas
+      if (filters.requestTypes && filters.requestTypes.length) {
+        const criticalTypes = [];
+        filters.requestTypes.forEach(type => {
+          const typeLoans = notReturnedLoans.filter(loan => 
+            loan.request?.typeRequest === type && 
+            (new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24) > 30
+          );
+          
+          if (typeLoans.length > 0) {
+            criticalTypes.push(`${type} (${typeLoans.length} préstamos críticos)`);
+          }
+        });
+        
+        if (criticalTypes.length > 0) {
+          notes.push("Los siguientes tipos de solicitud tienen préstamos críticos no devueltos:");
+          criticalTypes.forEach(type => notes.push(`- ${type}`));
+        }
+      }
+  
       const repeatOffenders = Object.entries(
         notReturnedLoans.reduce((acc, loan) => {
           acc[loan.user.name] = (acc[loan.user.name] || 0) + 1;
           return acc;
         }, {})
       ).filter(([_, count]) => count > 1);
-
+  
       if (repeatOffenders.length > 0) {
         notes.push(
           "Se detectaron usuarios con múltiples préstamos no devueltos:"
@@ -608,11 +737,11 @@ class ReportService {
           notes.push(`- ${name}: ${count} préstamos pendientes`);
         });
       }
-
+  
       if (notes.length > 0) {
         template.addNotes(doc, notes);
       }
-
+  
       return template.finalizeReport(doc);
     } catch (error) {
       console.error("Error en generateNotReturnedReport:", error);

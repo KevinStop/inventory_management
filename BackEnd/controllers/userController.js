@@ -3,25 +3,44 @@ const userModel = require("../models/userModel");
 const EmailService = require("../src/mailer/emailService");
 const { blacklistToken } = require("../middleware/blacklistedTokens");
 const { generateToken, setTokenCookie } = require("../Utils/tokenUtils");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 // Crear un usuario (manual)
 const registerUser = async (req, res) => {
   try {
-    const data = req.body;
-
-    if (req.file) {
-      data.imageUrl = `/uploads/users/${req.file.filename}`;
+    const userData = req.body;
+    
+    // Validar datos de entrada
+    if (!userData.email || !userData.password || !userData.name) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Todos los campos obligatorios deben ser proporcionados' 
+      });
     }
-
-    const user = await userModel.createUser(data);
-
+    
+    // Crear usuario (ahora devuelve también el token)
+    const { user, verificationToken } = await userModel.createUser(userData);
+    
+    // Enviar correo de verificación
+    await EmailService.sendAccountVerificationEmail(
+      user.userId, 
+      user.email, 
+      user.name, 
+      verificationToken
+    );
+    
     res.status(201).json({
-      message: "Usuario registrado exitosamente",
-      userId: user.userId,
+      success: true,
+      message: 'Usuario registrado. Por favor, verifica tu correo electrónico para activar tu cuenta.',
+      userId: user.userId
     });
   } catch (error) {
-    console.error("Error en registro de usuario:", error);
-    res.status(500).json({ error: error.message });
+    console.error('Error en registro de usuario:', error.message);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al registrar el usuario' 
+    });
   }
 };
 
@@ -31,6 +50,14 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await userModel.verifyUserCredentials(email, password);
+    
+    // Verificar si la cuenta está activa
+    if (!user.isActive) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Tu cuenta aún no está activada. Por favor, verifica tu correo electrónico.' 
+      });
+    }
 
     const token = generateToken({
       userId: user.userId,
@@ -216,6 +243,169 @@ const requestPasswordReset = async (req, res) => {
   }
 };
 
+// Verificar cuenta de usuario
+const verifyUserAccount = async (req, res) => {
+  try {
+    const { userId, token } = req.params;
+    
+    // Buscar usuario por ID y token
+    const user = await prisma.user.findFirst({
+      where: {
+        userId: parseInt(userId),
+        verificationToken: token
+      }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Enlace de verificación inválido o expirado.' 
+      });
+    }
+    
+    // Activar la cuenta del usuario
+    await prisma.user.update({
+      where: { userId: parseInt(userId) },
+      data: { 
+        isActive: true,
+        verificationToken: null // Limpiar el token después de usarlo
+      }
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Cuenta verificada exitosamente. Ahora puedes iniciar sesión.' 
+    });
+  } catch (error) {
+    console.error('Error al verificar la cuenta:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error al verificar la cuenta. Por favor, intenta nuevamente.' 
+    });
+  }
+};
+
+// Cancelar cuenta de usuario
+const cancelUserAccount = async (req, res) => {
+  try {
+    const { userId, token } = req.params;
+    
+    // Buscar usuario por ID y token
+    const user = await prisma.user.findFirst({
+      where: {
+        userId: parseInt(userId),
+        verificationToken: token
+      }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Enlace de cancelación inválido o expirado.' 
+      });
+    }
+    
+    // Eliminar la cuenta de usuario
+    await prisma.user.delete({
+      where: { userId: parseInt(userId) }
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Cuenta eliminada exitosamente.' 
+    });
+  } catch (error) {
+    console.error('Error al cancelar la cuenta:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error al cancelar la cuenta. Por favor, intenta nuevamente.' 
+    });
+  }
+};
+
+// userController.js
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Buscar el usuario
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        userId: true,
+        email: true,
+        name: true,
+        isActive: true,
+        verificationToken: true
+      }
+    });
+    
+    // Verificar si el usuario existe y necesita verificación
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No se encontró ningún usuario con este correo electrónico'
+      });
+    }
+    
+    if (user.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta cuenta ya está verificada'
+      });
+    }
+    
+    if (!user.verificationToken) {
+      // Generar un nuevo token si no existe
+      const verificationToken = generateVerificationToken();
+      
+      await prisma.user.update({
+        where: { userId: user.userId },
+        data: { verificationToken }
+      });
+      
+      user.verificationToken = verificationToken;
+    }
+    
+    // Enviar correo
+    await EmailService.sendAccountVerificationEmail(
+      user.userId,
+      user.email,
+      user.name,
+      user.verificationToken
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Correo de verificación reenviado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al reenviar correo de verificación:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al reenviar el correo de verificación'
+    });
+  }
+};
+
+const updateUserTheme = async (req, res) => {
+  try {
+    const userId = Number(req.user.userId);
+    const { theme } = req.body;
+    
+    if (!theme || (theme !== 'light' && theme !== 'dark')) {
+      return res.status(400).json({ error: "El tema debe ser 'light' o 'dark'" });
+    }
+    
+    const updatedUser = await userModel.updateUserTheme(userId, theme);
+    
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error al actualizar el tema:", error);
+    res.status(500).json({ error: error.message || "Error al actualizar el tema" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -226,5 +416,9 @@ module.exports = {
   getAuthenticatedUser,
   getSessionTime,
   getAllUsers,
-  requestPasswordReset
+  requestPasswordReset,
+  verifyUserAccount,
+  cancelUserAccount,
+  resendVerificationEmail,
+  updateUserTheme
 };

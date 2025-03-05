@@ -7,11 +7,12 @@ const app = express();
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swaggerConfig');
+const cron = require('node-cron');
 app.use(cookieParser());
 app.use(express.json());
 
 app.use(cors({
-  origin: 'http://localhost:4200',
+  origin: process.env.FRONTEND_URL || 'http://localhost:4200',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
   credentials: true,
@@ -29,7 +30,7 @@ app.get('/uploads/comprobantes/:filename', (req, res) => {
 
   if (path.extname(filePath).toLowerCase() === '.pdf') {
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
+    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:4200');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   }
@@ -60,6 +61,8 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const componentMovementRoutes = require('./routes/componentMovementRoutes');
 const academicPeriodRoutes = require('./routes/academicPeriodRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const { cleanupUnverifiedAccounts } = require('./src/scheduler/cleanUpUnverifiedAccounts');
+const { checkReturnDates } = require('./src/scheduler/returnDateChecker');
 
 // Rutas de la API
 app.use('/components', componentRoutes);
@@ -70,6 +73,16 @@ app.use('/component-movements', componentMovementRoutes);
 app.use('/academic-periods', academicPeriodRoutes);
 app.use('/reports', reportRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+//tarea programada para limpiar cuentas no verificadas
+cron.schedule('0 0 * * *', async () => {
+  try {
+    cleanupUnverifiedAccounts();
+    checkReturnDates();
+  } catch (error) {
+    console.error('Error en la tarea programada:', error);
+  }
+});
 
 
 app.listen(PORT, () => {
