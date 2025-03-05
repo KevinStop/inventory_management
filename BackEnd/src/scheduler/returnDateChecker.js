@@ -18,8 +18,18 @@ async function checkReturnDates() {
           lt: tomorrow
         },
         isActive: true
+      },
+      include: {
+        user: true,
+        requestDetails: {
+          include: {
+            component: true
+          }
+        }
       }
     });
+
+    console.log(`${new Date().toISOString()} - Encontradas ${dueToday.length} solicitudes que vencen hoy`);
 
     // Enviar notificaciones para las que vencen hoy
     for (const request of dueToday) {
@@ -35,8 +45,18 @@ async function checkReturnDates() {
           lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
         },
         isActive: true
+      },
+      include: {
+        user: true,
+        requestDetails: {
+          include: {
+            component: true
+          }
+        }
       }
     });
+
+    console.log(`${new Date().toISOString()} - Encontradas ${dueTomorrow.length} solicitudes que vencen mañana`);
 
     // Enviar recordatorios para las que vencen mañana
     for (const request of dueTomorrow) {
@@ -45,6 +65,8 @@ async function checkReturnDates() {
 
   } catch (error) {
     console.error('Error checking return dates:', error);
+    // Agregar más detalles al error para mejor depuración
+    console.error('Stack trace:', error.stack);
   }
 }
 

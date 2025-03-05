@@ -62,7 +62,7 @@ const componentMovementRoutes = require('./routes/componentMovementRoutes');
 const academicPeriodRoutes = require('./routes/academicPeriodRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const { cleanupUnverifiedAccounts } = require('./src/scheduler/cleanUpUnverifiedAccounts');
-const { checkReturnDates } = require('./src/scheduler/returnDateChecker');
+const checkReturnDates = require('./src/scheduler/returnDateChecker');
 
 // Rutas de la API
 app.use('/components', componentRoutes);
@@ -77,13 +77,19 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 //tarea programada para limpiar cuentas no verificadas
 cron.schedule('0 0 * * *', async () => {
   try {
-    cleanupUnverifiedAccounts();
-    checkReturnDates();
+    await cleanupUnverifiedAccounts();
+    console.log('Limpieza de cuentas no verificadas completada');
   } catch (error) {
-    console.error('Error en la tarea programada:', error);
+    console.error('Error al limpiar cuentas no verificadas:', error);
+  }
+  
+  try {
+    await checkReturnDates();
+    console.log('Verificación de fechas de devolución completada');
+  } catch (error) {
+    console.error('Error al verificar fechas de devolución:', error);
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);

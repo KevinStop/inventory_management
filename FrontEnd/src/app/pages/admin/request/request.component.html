@@ -95,11 +95,11 @@
               <div class="flex items-center space-x-4">
                 <!-- Botones aceptar y rechazar si el estado es "pendiente" -->
                 <ng-container *ngIf="request.status === 'pendiente'">
-                  <button (click)="acceptRequest(request.requestId)"
+                  <button (click)="acceptRequest(request.requestId)" [disabled]="isProcessingRequest"
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300">
                     Aceptar
                   </button>
-                  <button (click)="rejectRequest(request.requestId)"
+                  <button (click)="rejectRequest(request.requestId)" [disabled]="isProcessingRequest"
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                     Rechazar
                   </button>
@@ -107,11 +107,11 @@
 
                 <!-- Botones para estado préstamo -->
                 <ng-container *ngIf="request.status === 'prestamo'">
-                  <button (click)="markAsNotReturned(request.requestId)"
+                  <button (click)="markAsNotReturned(request.requestId)" [disabled]="isProcessingRequest"
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                     No devuelto
                   </button>
-                  <button (click)="finalizeRequest(request.requestId)"
+                  <button (click)="finalizeRequest(request.requestId)" [disabled]="isProcessingRequest"
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 focus:ring-4 focus:outline-none focus:ring-yellow-300">
                     Finalizar
                   </button>
@@ -119,7 +119,7 @@
 
                 <!-- Botón finalizar para estado no devuelto -->
                 <ng-container *ngIf="request.status === 'no_devuelto'">
-                  <button (click)="finalizeRequest(request.requestId)"
+                  <button (click)="finalizeRequest(request.requestId)" [disabled]="isProcessingRequest"
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 focus:ring-4 focus:outline-none focus:ring-yellow-300">
                     Finalizar
                   </button>

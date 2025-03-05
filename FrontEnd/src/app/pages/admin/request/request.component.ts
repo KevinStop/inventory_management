@@ -17,6 +17,7 @@ import { environment } from '../../../../environments/environment';
 export default class RequestComponent implements OnInit {
 
   public apiUrl = environment.apiUrl;
+  isProcessingRequest: boolean = false;
   
   requests: any[] = [];
   filteredRequests: any[] = [];
@@ -152,12 +153,19 @@ export default class RequestComponent implements OnInit {
   
     this.sweetalertService.confirm('¿Estás seguro de que deseas aceptar esta solicitud?').then((result) => {
       if (result.isConfirmed) {
+        // Mostrar alerta de carga
+        this.sweetalertService.loading('Procesando solicitud y enviando notificaciones...');
+        this.isProcessingRequest = true;
+  
         this.requestService.updateRequest(requestId).subscribe({
           next: (response) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.success('Solicitud aceptada con éxito');
             this.fetchActiveRequests();
+            this.isProcessingRequest = false;
           },
           error: (err) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             const errorMessage = err.error?.error || 'Error al aceptar la solicitud';
             if (errorMessage === 'No hay un periodo académico activo. No se puede aceptar la solicitud.') {
               this.sweetalertService.error(
@@ -178,6 +186,7 @@ export default class RequestComponent implements OnInit {
             } else {
               this.sweetalertService.error(errorMessage);
             }
+            this.isProcessingRequest = false;
           },
         });
       }
@@ -220,12 +229,19 @@ export default class RequestComponent implements OnInit {
   private confirmFinalizeRequest(requestId: number): void {
     this.sweetalertService.confirm('¿Estás seguro de que deseas finalizar esta solicitud?').then((result) => {
       if (result.isConfirmed) {
+        // Mostrar alerta de carga
+        this.sweetalertService.loading('Finalizando solicitud y actualizando registros...');
+        this.isProcessingRequest = true;
+  
         this.requestService.finalizeRequest(requestId, this.adminNotes).subscribe({
           next: (response) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.success('Solicitud finalizada con éxito');
             this.fetchActiveRequests();
+            this.isProcessingRequest = false;
           },
           error: (err) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             const errorMessage = err.error?.error || 'Error al finalizar la solicitud';
             if (errorMessage.includes('No hay un periodo académico activo')) {
               this.sweetalertService.error(
@@ -234,6 +250,7 @@ export default class RequestComponent implements OnInit {
             } else {
               this.sweetalertService.error(errorMessage);
             }
+            this.isProcessingRequest = false;
           },
         });
       }
@@ -271,12 +288,19 @@ export default class RequestComponent implements OnInit {
   cancelRequest(id: number): void {
     this.sweetalertService.confirm('¿Estás seguro de que deseas cancelar esta solicitud?').then((result) => {
       if (result.isConfirmed) {
+        // Mostrar alerta de carga
+        this.sweetalertService.loading('Cancelando la solicitud...');
+        this.isProcessingRequest = true;
+  
         this.requestService.deleteRequest(id).subscribe({
           next: () => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.success('Solicitud cancelada exitosamente.');
             this.fetchActiveRequests();
+            this.isProcessingRequest = false;
           },
           error: (error) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             const errorMessage = error.error?.error || 'Hubo un error al cancelar la solicitud.';
             if (errorMessage === 'No hay un periodo académico activo.') {
               this.sweetalertService.error(
@@ -285,6 +309,7 @@ export default class RequestComponent implements OnInit {
             } else {
               this.sweetalertService.error(errorMessage);
             }
+            this.isProcessingRequest = false;
           }
         });
       }
@@ -316,14 +341,22 @@ export default class RequestComponent implements OnInit {
   private confirmMarkAsNotReturned(requestId: number): void {
     this.sweetalertService.confirm('¿Estás seguro de que deseas marcar esta solicitud como no devuelta?').then((result) => {
       if (result.isConfirmed) {
+        // Mostrar alerta de carga
+        this.sweetalertService.loading('Actualizando estado y enviando notificaciones...');
+        this.isProcessingRequest = true;
+  
         this.requestService.markAsNotReturned(requestId, this.adminNotes).subscribe({
           next: (response) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.success('Solicitud marcada como no devuelta con éxito');
             this.fetchActiveRequests(); // Actualizar lista
+            this.isProcessingRequest = false;
           },
           error: (err) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.error('Error al marcar la solicitud como no devuelta');
             console.error('Error al marcar la solicitud como no devuelta:', err);
+            this.isProcessingRequest = false;
           },
         });
       }
@@ -333,12 +366,19 @@ export default class RequestComponent implements OnInit {
   private confirmRejectRequest(requestId: number): void {
     this.sweetalertService.confirm('¿Estás seguro de que deseas rechazar esta solicitud?').then((result) => {
       if (result.isConfirmed) {
+        // Mostrar alerta de carga
+        this.sweetalertService.loading('Procesando rechazo y enviando notificaciones...');
+        this.isProcessingRequest = true;
+  
         this.requestService.rejectRequest(requestId, this.adminNotes).subscribe({
           next: (response) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             this.sweetalertService.success('Solicitud rechazada con éxito');
             this.fetchActiveRequests();
+            this.isProcessingRequest = false;
           },
           error: (err) => {
+            this.sweetalertService.close(); // Cerrar alerta de carga
             const errorMessage = err.error?.error || 'Error al rechazar la solicitud';
             if (errorMessage === 'No hay un periodo académico activo.') {
               this.sweetalertService.error(
@@ -347,6 +387,7 @@ export default class RequestComponent implements OnInit {
             } else {
               this.sweetalertService.error(errorMessage);
             }
+            this.isProcessingRequest = false;
           }
         });
       }

@@ -15,9 +15,11 @@ async function cleanupUnverifiedAccounts() {
         verificationToken: { not: null },
         createdAt: { lt: cutoffDate }
       }
-    }); 
+    });
+    
+    console.log(`${deletedAccounts.count} cuentas no verificadas eliminadas`);
   } catch (error) {
-    throw error;
+    console.error('Error eliminando cuentas no verificadas:', error);
   } finally {
     await prisma.$disconnect();
   }

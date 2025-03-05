@@ -24,14 +24,22 @@ class EmailService {
 
       const adminEmails = adminUsers.map(admin => admin.email);
       
+      // Preparar los componentes para la plantilla
+      const components = request.requestDetails.map(detail => ({
+        name: detail.component.name,
+        quantity: detail.quantity
+      }));
+      
       await MailService.enviarCorreo(
         adminEmails,
         'Nueva Solicitud de Componentes',
         templates.newRequestTemplate({
           userName: request.user.name,
+          userLastName: request.user.lastName || '', // Añadir apellido
           createdAt: request.createdAt,
           typeRequest: request.typeRequest,
-          description: request.description
+          description: request.description,
+          components: components // Añadir componentes
         })
       );
     } catch (error) {
@@ -44,13 +52,31 @@ class EmailService {
     try {
       const request = await prisma.request.findUnique({
         where: { requestId },
-        include: { user: true }
+        include: { 
+          user: true,
+          requestDetails: {
+            include: {
+              component: true
+            }
+          }
+        }
       });
+
+      // Preparar los componentes para la plantilla
+      const components = request.requestDetails.map(detail => ({
+        name: detail.component.name,
+        quantity: detail.quantity
+      }));
 
       await MailService.enviarCorreo(
         request.user.email,
         'Solicitud Aprobada',
-        templates.approvedRequestTemplate(request)
+        templates.approvedRequestTemplate({
+          ...request,
+          userName: request.user.name,
+          userLastName: request.user.lastName || '', // Añadir apellido
+          components: components // Añadir componentes
+        })
       );
     } catch (error) {
       console.error('Error sending approval notification:', error);
@@ -62,13 +88,31 @@ class EmailService {
     try {
       const request = await prisma.request.findUnique({
         where: { requestId },
-        include: { user: true }
+        include: { 
+          user: true,
+          requestDetails: {
+            include: {
+              component: true
+            }
+          }
+        }
       });
+
+      // Preparar los componentes para la plantilla
+      const components = request.requestDetails.map(detail => ({
+        name: detail.component.name,
+        quantity: detail.quantity
+      }));
 
       await MailService.enviarCorreo(
         request.user.email,
         'Solicitud Rechazada',
-        templates.rejectedRequestTemplate(request)
+        templates.rejectedRequestTemplate({
+          ...request,
+          userName: request.user.name,
+          userLastName: request.user.lastName || '', // Añadir apellido
+          components: components // Añadir componentes
+        })
       );
     } catch (error) {
       console.error('Error sending rejection notification:', error);
@@ -97,17 +141,21 @@ class EmailService {
         where: { role: 'admin', isActive: true }
       });
 
+      // Preparar los componentes para las plantillas
+      const components = request.requestDetails.map(detail => ({
+        name: detail.component.name,
+        quantity: detail.quantity
+      }));
+
       // Enviar correo al usuario
       await MailService.enviarCorreo(
         request.user.email,
         'Fecha de devolución de componentes',
         templates.returnDateTemplate({
           userName: request.user.name,
+          userLastName: request.user.lastName || '', // Añadir apellido
           returnDate: request.returnDate,
-          components: request.requestDetails.map(detail => ({
-            name: detail.component.name,
-            quantity: detail.quantity
-          }))
+          components: components
         })
       );
 
@@ -118,12 +166,10 @@ class EmailService {
         'Notificación de fecha de devolución vencida',
         templates.adminReturnDateTemplate({
           userName: request.user.name,
+          userLastName: request.user.lastName || '', // Añadir apellido
           userEmail: request.user.email,
           returnDate: request.returnDate,
-          components: request.requestDetails.map(detail => ({
-            name: detail.component.name,
-            quantity: detail.quantity
-          }))
+          components: components
         })
       );
     } catch (error) {
@@ -154,16 +200,20 @@ class EmailService {
       const diffDays = Math.ceil((returnDate.getTime() - creationDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (diffDays >= 3) {
+        // Preparar los componentes para la plantilla
+        const components = request.requestDetails.map(detail => ({
+          name: detail.component.name,
+          quantity: detail.quantity
+        }));
+
         await MailService.enviarCorreo(
           request.user.email,
           'Recordatorio: Próxima devolución de componentes',
           templates.upcomingReturnTemplate({
             userName: request.user.name,
+            userLastName: request.user.lastName || '', // Añadir apellido
             returnDate: request.returnDate,
-            components: request.requestDetails.map(detail => ({
-              name: detail.component.name,
-              quantity: detail.quantity
-            }))
+            components: components
           })
         );
       }

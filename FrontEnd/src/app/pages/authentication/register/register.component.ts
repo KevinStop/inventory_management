@@ -29,6 +29,7 @@ export default class RegisterComponent implements OnInit {
   };
 
   showErrors = false;
+  isRegistering: boolean = false;
 
   constructor(private userService: UserService, private router: Router, private sweetalertService: SweetalertService) { }
 
@@ -118,6 +119,10 @@ export default class RegisterComponent implements OnInit {
       this.sweetalertService.error('Por favor, complete todos los campos correctamente.');
       return;
     }
+    
+    // Mostrar alerta de carga
+    this.sweetalertService.loading('Procesando registro y enviando correo de activación...');
+    this.isRegistering = true;
   
     const userData = {
       email: this.userData.email,
@@ -128,15 +133,19 @@ export default class RegisterComponent implements OnInit {
   
     this.userService.register(userData).subscribe({
       next: (response) => {
+        this.sweetalertService.close(); // Cerrar alerta de carga
         this.sweetalertService.success(
           'Registro exitoso. Se ha enviado un correo electrónico para activar tu cuenta. ' +
           'Por favor, revisa tu bandeja de entrada y sigue las instrucciones.'
         );
+        this.isRegistering = false;
         this.router.navigate(['/registration-success']);
       },
       error: (error) => {
+        this.sweetalertService.close(); // Cerrar alerta de carga
         const errorMessage = error.error?.message || 'Hubo un problema al registrar el usuario. Por favor, intenta nuevamente.';
         this.sweetalertService.error(errorMessage);
+        this.isRegistering = false;
       }
     });
   }
